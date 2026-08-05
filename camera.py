@@ -82,6 +82,7 @@ last_stage = 0
 while rval:
     rval, frame = vc.read()
     frame_sm = cv2.resize(frame, (FRAME_X, FRAME_Y))
+    print("Start", frame_sm.shape)
     
     curr_time = time.time()
 
@@ -98,7 +99,12 @@ while rval:
             wb = calc_white_balance(frame_sm, sample_xy[0][0], sample_xy[0][1], SELECTION_SIZE, FRAME_X, FRAME_Y, SELECTION_THICKNESS)
             assert len(wb) == 3
         
-        frame_sm = cv2.subtract(frame_sm, wb)
+        frame_sm_float = frame_sm.astype(np.float32)
+        for i in range(3):
+            frame_sm_float[:,:,i] *= wb[i]
+        frame_sm = np.clip(frame_sm_float, 0, 255).astype(np.uint8)
+
+        print("After", frame_sm.shape)
 
     cv2.setMouseCallback('Set Up', sample_event)
 

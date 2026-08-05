@@ -13,16 +13,14 @@ def calc_white_balance(frame, wb_x, wb_y, selection_size, frame_x, frame_y, thic
     cc_roi = frame[wb_y-selection_size-thickness:wb_y+(selection_size-thickness), wb_x-selection_size-thickness:wb_x+(selection_size-thickness)]
     cv2.imshow("Color Correction (Pre)", cc_roi)
 
-    for x in range(2*(selection_size-thickness)):
-        for y in range(2*(selection_size-thickness)):
-            colors = cc_roi[x, y]
-            colors_avg = list(map(lambda a: float(a)/(selection_size-thickness)/(selection_size-thickness), colors))
-            wb_r = wb_r + colors_avg[0]
-            wb_g = wb_g + colors_avg[1]
-            wb_b = wb_b + colors_avg[2]
+    wb_b, wb_g, wb_r, _ = cv2.mean(cc_roi)
+    target_avg = (wb_b + wb_g + wb_r) / 3.0
 
-    wb_min = min(wb_r, wb_g, wb_b)
-    wb_offset = (wb_r - wb_min, wb_g - wb_min, wb_b - wb_min)
+    gain_b = target_avg / wb_b
+    gain_g = target_avg / wb_g
+    gain_r = target_avg / wb_r
+
+    wb_offset = (gain_b, gain_g, gain_r)
 
     print(f"Average: {wb_offset}")
     return wb_offset
