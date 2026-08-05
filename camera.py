@@ -29,17 +29,78 @@ selection_stage = 0
 7: Pawn
 '''
 
-selection_stage_name = ["White",          "Board",       "King",    "Queen",     "Bishop",    "Knight",  "Rook",    "Pawn"]
-selection_stage_color = [(255, 255, 255), (150, 0, 255), (0,0,255), (0,150,255), (0,255,255), (0,255,0), (255,0,0), (255,0,150)]
-
-#            White, Board,  King, Queen, Bisho, Knigh,  Rook,  Pawn
-sample_xy = [[0,0], [0,0], [0,0], [0,0], [0,0], [0,0], [0,0], [0,0]]
-sample_hue = [   0,     0,     0,     0,     0,     0,     0,     0 ]
-
+selection = [
+    {
+        "name": "White",
+        "color": (255, 255, 255),
+        "x": 0,
+        "y": 0,
+        "range": 25,
+        "hue": 0
+    }, 
+    {
+        "name": "Board",
+        "color": (150, 0, 255),
+        "x": 0,
+        "y": 0,
+        "range": 25,
+        "hue": 0
+    }, 
+    {
+        "name": "King",
+        "color": (0, 0, 255),
+        "x": 0,
+        "y": 0,
+        "range": 25,
+        "hue": 0
+    }, 
+    {
+        "name": "Queen",
+        "color": (0, 150, 255),
+        "x": 0,
+        "y": 0,
+        "range": 25,
+        "hue": 0
+    }, 
+    {
+        "name": "Bishop",
+        "color": (0, 255, 255),
+        "x": 0,
+        "y": 0,
+        "range": 25,
+        "hue": 0
+    }, 
+    {
+        "name": "Knight",
+        "color": (0, 255, 0),
+        "x": 0,
+        "y": 0,
+        "range": 25,
+        "hue": 0
+    }, 
+    {
+        "name": "Rook",
+        "color": (255, 0, 0),
+        "x": 0,
+        "y": 0,
+        "range": 25,
+        "hue": 0
+    }, 
+    {
+        "name": "Pawn",
+        "color": (255, 0, 150),
+        "x": 0,
+        "y": 0,
+        "range": 25,
+        "hue": 0
+    }, 
+    
+]
 
 def sample_event(_event, x, y, _flags, _params):
-    global sample_xy, selection_stage
-    sample_xy[selection_stage] = [x,y]
+    global selection, selection_stage
+    selection[selection_stage]["x"] = x
+    selection[selection_stage]["y"] = y
     
 
 cv2.namedWindow("raw")
@@ -93,10 +154,10 @@ while rval:
     # Add white balance if set already
     if selection_stage > 0:
 
-        # Only check every 10s
-        if curr_time - last_time > 0.5:
+        # Only check every 5s
+        if curr_time - last_time > 5:
             last_time = curr_time
-            wb = calc_white_balance(frame_sm, sample_xy[0][0], sample_xy[0][1], SELECTION_SIZE, FRAME_X, FRAME_Y, SELECTION_THICKNESS)
+            wb = calc_white_balance(frame_sm, selection[0]["x"], selection[0]["y"], SELECTION_SIZE, FRAME_X, FRAME_Y, SELECTION_THICKNESS)
             assert len(wb) == 3
         
         frame_sm_float = frame_sm.astype(np.float32)
@@ -107,8 +168,8 @@ while rval:
     cv2.setMouseCallback('Set Up', sample_event)
 
     for stage in range(selection_stage + 1):
-        cv2.rectangle(frame_sm, (sample_xy[stage][0]-SELECTION_SIZE, sample_xy[stage][1]-SELECTION_SIZE), (sample_xy[stage][0]+SELECTION_SIZE, sample_xy[stage][1]+SELECTION_SIZE), selection_stage_color[stage], SELECTION_THICKNESS)  
-        cv2.putText(frame_sm, selection_stage_name[stage], (sample_xy[stage][0]-30, sample_xy[stage][1]-30), cv2.FONT_HERSHEY_SIMPLEX, 1, selection_stage_color[stage], 1)
+        cv2.rectangle(frame_sm, (selection[stage]["x"]-SELECTION_SIZE, selection[stage]["y"]-SELECTION_SIZE), (selection[stage]["x"]+SELECTION_SIZE, selection[stage]["y"]+SELECTION_SIZE), selection[stage]["color"], SELECTION_THICKNESS)  
+        cv2.putText(frame_sm, selection[stage]["name"], (selection[stage]["x"]-30, selection[stage]["y"]-30), cv2.FONT_HERSHEY_SIMPLEX, 1, selection[stage]["color"], 1)
 
     cv2.imshow("Set Up", frame_sm)
 
@@ -119,7 +180,7 @@ while rval:
         if selection_stage > 7:
             break
     
-    
+
 cv2.waitKey(0)
 cv2.destroyAllWindows()
 
