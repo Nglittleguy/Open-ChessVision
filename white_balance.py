@@ -10,11 +10,11 @@ def calc_white_balance(frame, wb_x, wb_y, selection_size, frame_x, frame_y, thic
     wb_g = 0
     wb_b = 0
 
-    cc_roi = frame[wb_y-selection_size-thickness:wb_y+selection_size-thickness, wb_x-selection_size-thickness:wb_x+selection_size-thickness]
+    cc_roi = frame[wb_y-selection_size-thickness:wb_y+(selection_size-thickness), wb_x-selection_size-thickness:wb_x+(selection_size-thickness)]
     cv2.imshow("Color Correction (Pre)", cc_roi)
 
-    for x in range(2*selection_size-thickness):
-        for y in range(2*selection_size-thickness):
+    for x in range(2*(selection_size-thickness)):
+        for y in range(2*(selection_size-thickness)):
             colors = cc_roi[x, y]
             colors_avg = list(map(lambda a: float(a)/(selection_size-thickness)/(selection_size-thickness), colors))
             wb_r = wb_r + colors_avg[0]

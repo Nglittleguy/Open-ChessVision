@@ -14,27 +14,26 @@ FRAME_Y = 540
 def nothing(x):
     return()
 
-wb_xy = [0, 0]
 wb = (0,0,0)
-
-def wb_event(_event, x, y, _flags, _params):
-    global wb_xy
-    wb_xy = [x, y]
 
 selection_stage = 0
 '''
-0: Board
-1: King
-2: Queen
-3: Bishop
-4: Knight
-5: Rook
-6: Pawn
+0: White
+1: Board
+2: King
+3: Queen
+4: Bishop
+5: Knight
+6: Rook
+7: Pawn
 '''
 
-#            Board,  King, Queen, Bisho, Knigh,  Rook,  Pawn
-sample_xy = [[0,0], [0,0], [0,0], [0,0], [0,0], [0,0], [0,0]]
-sample_hue = [0,        0,     0,     0,     0,     0,     0 ]
+selection_stage_name = ["White",          "Board",       "King",    "Queen",     "Bishop",    "Knight",  "Rook",    "Pawn"]
+selection_stage_color = [(255, 255, 255), (150, 0, 255), (0,0,255), (0,150,255), (0,255,255), (0,255,0), (255,0,0), (255,0,150)]
+
+#            White, Board,  King, Queen, Bisho, Knigh,  Rook,  Pawn
+sample_xy = [[0,0], [0,0], [0,0], [0,0], [0,0], [0,0], [0,0], [0,0]]
+sample_hue = [   0,     0,     0,     0,     0,     0,     0,     0 ]
 
 
 def sample_event(_event, x, y, _flags, _params):
@@ -52,23 +51,6 @@ if vc.isOpened(): # try to get the first frame
 else:
     rval = False
 
-'''
-Step 1: Get White balance
-'''
-while rval:
-    rval, frame = vc.read()
-    frame_sm = cv2.resize(frame, (FRAME_X, FRAME_Y))
-    
-
-    cv2.setMouseCallback('raw', wb_event)
-
-    key = cv2.waitKey(10) & 0xFF
-
-    if key == 27 or key == ord('q') or key == ord(' '): # exit on ESC, q, spacebar
-        break
-
-    cv2.rectangle(frame_sm, (wb_xy[0]-SELECTION_SIZE, wb_xy[1]-SELECTION_SIZE), (wb_xy[0]+SELECTION_SIZE, wb_xy[1]+SELECTION_SIZE), (255, 255, 255), SELECTION_THICKNESS)  
-    cv2.imshow("raw", frame_sm)
 
 
     # hueValue = cv2.getTrackbarPos("Hue", "Hue Select Window")
@@ -87,42 +69,51 @@ while rval:
 
     # # cv2.imshow('frame', box_frame)
 
-
-cv2.destroyAllWindows()
-
-'''
-Step 2: Set Up Loop
-'''
-
 # cv2.namedWindow("mask")
 # cv2.namedWindow("Hue Select Window")
 # cv2.createTrackbar("Hue", "Hue Select Window", 0, 180, nothing);
 
+
+'''
+Step 1: Set Up Loop
+'''
+last_stage = 0
+
 while rval:
-    rval, frame2 = vc.read()
-    frame2_sm = cv2.resize(frame2, (FRAME_X, FRAME_Y))
+    rval, frame = vc.read()
+    frame_sm = cv2.resize(frame, (FRAME_X, FRAME_Y))
+    
+    curr_time = time.time()
+
+    if selection_stage > last_stage:
+        last_stage = selection_stage
     
 
-    curr_time = time.time()
-    if curr_time - last_time > 10:
-        last_time = curr_time
-        wb = calc_white_balance(frame2, wb_xy[0], wb_xy[1], SELECTION_SIZE, FRAME_X, FRAME_Y, SELECTION_THICKNESS)
-        assert len(wb) == 3
+    # Add white balance if set already
+    if selection_stage > 0:
+
+        # Only check every 10s
+        if curr_time - last_time > 0.5:
+            last_time = curr_time
+            wb = calc_white_balance(frame_sm, sample_xy[0][0], sample_xy[0][1], SELECTION_SIZE, FRAME_X, FRAME_Y, SELECTION_THICKNESS)
+            assert len(wb) == 3
         
-    wb_frame = cv2.subtract(frame2_sm, wb)
-    cv2.rectangle(wb_frame, (wb_xy[0]-SELECTION_SIZE, wb_xy[1]-SELECTION_SIZE), (wb_xy[0]+SELECTION_SIZE, wb_xy[1]+SELECTION_SIZE), (255, 255, 255), SELECTION_THICKNESS)  
+        frame_sm = cv2.subtract(frame_sm, wb)
 
-
-    cv2.setMouseCallback('White Balanced', sample_event)
+    cv2.setMouseCallback('Set Up', sample_event)
 
     for stage in range(selection_stage + 1):
-        cv2.rectangle(frame2_sm, (sample_xy[stage][0]-SELECTION_SIZE, sample_xy[stage][1]-SELECTION_SIZE), (sample_xy[stage][0]+SELECTION_SIZE, sample_xy[stage][1]+SELECTION_SIZE), (0, 0, 255), SELECTION_THICKNESS)  
+        cv2.rectangle(frame_sm, (sample_xy[stage][0]-SELECTION_SIZE, sample_xy[stage][1]-SELECTION_SIZE), (sample_xy[stage][0]+SELECTION_SIZE, sample_xy[stage][1]+SELECTION_SIZE), selection_stage_color[stage], SELECTION_THICKNESS)  
+        cv2.putText(frame_sm, selection_stage_name[stage], (sample_xy[stage][0]-30, sample_xy[stage][1]-30), cv2.FONT_HERSHEY_SIMPLEX, 1, selection_stage_color[stage], 1)
 
-    cv2.imshow("White Balanced", wb_frame)
+    cv2.imshow("Set Up", frame_sm)
+
     key = cv2.waitKey(10) & 0xFF
 
     if key == ord(' '): # next on spacebar
-        break
+        selection_stage = selection_stage + 1
+        if selection_stage > 7:
+            break
     
     
 cv2.waitKey(0)
