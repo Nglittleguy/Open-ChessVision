@@ -1,6 +1,7 @@
 import cv2
 from color_range import color_limits
 from white_balance import calc_white_balance
+from hue_picker import calc_hue
 from PIL import Image
 import numpy as np
 import pandas
@@ -82,7 +83,6 @@ last_stage = 0
 while rval:
     rval, frame = vc.read()
     frame_sm = cv2.resize(frame, (FRAME_X, FRAME_Y))
-    print("Start", frame_sm.shape)
     
     curr_time = time.time()
 
@@ -103,8 +103,6 @@ while rval:
         for i in range(3):
             frame_sm_float[:,:,i] *= wb[i]
         frame_sm = np.clip(frame_sm_float, 0, 255).astype(np.uint8)
-
-        print("After", frame_sm.shape)
 
     cv2.setMouseCallback('Set Up', sample_event)
 
