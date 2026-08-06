@@ -1,5 +1,5 @@
 import cv2
-from color_range import color_mask
+from color_mask import color_mask
 from white_balance import calc_white_balance, add_white_balance
 from hue_picker import calc_hue
 from PIL import Image
@@ -23,28 +23,6 @@ if vc.isOpened(): # try to get the first frame
     rval, frame = vc.read()
 else:
     rval = False
-
-
-
-    # hueValue = cv2.getTrackbarPos("Hue", "Hue Select Window")
-    # hsvImage = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
-    
-    # lowLimit, highLimit = color_limits(hueValue)
-    # mask = cv2.inRange(hsvImage, lowLimit, highLimit)
-    # cv2.imshow("mask", mask)
-    # mask_ = Image.fromarray(mask)
-    # # bbox = mask_.getbbox()
-
-    # # if bbox is not None:
-    # #     x1, y1, x2, y2 = bbox
-
-    # #     box_frame = cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 5)
-
-    # # cv2.imshow('frame', box_frame)
-
-# cv2.namedWindow("mask")
-# cv2.namedWindow("Hue Select Window")
-# cv2.createTrackbar("Hue", "Hue Select Window", 0, 180, nothing);
 
 '''
 Step 1: Set Zones
@@ -96,8 +74,8 @@ cv2.destroyAllWindows()
 '''
 Step 2: Sample Set Up Loop
 '''
-# cv2.namedWindow("Range Selection")
-cv2.createTrackbar('Range', 'Samples', 0, 25, nothing)
+cv2.namedWindow("Range Selection")
+cv2.createTrackbar('Range', 'Range Selection', 0, 50, nothing)
 
 wb = (0,0,0)
 
@@ -200,6 +178,7 @@ while rval:
 
     if selection_stage > last_stage:
         last_stage = selection_stage
+
     
     # Add white balance if set already
     if selection_stage > 0:
