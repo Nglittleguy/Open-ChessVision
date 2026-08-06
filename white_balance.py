@@ -21,6 +21,10 @@ def calc_white_balance(frame, wb_x, wb_y, selection_size, frame_x, frame_y, thic
     gain_r = target_avg / wb_r
 
     wb_offset = (gain_b, gain_g, gain_r)
-
-    print(f"Average: {wb_offset}")
     return wb_offset
+
+def add_white_balance(frame, wb):
+    float_frame = frame.astype(np.float32)
+    for i in range(3):
+        float_frame[:,:,i] *= wb[i]
+    return np.clip(float_frame, 0, 255).astype(np.uint8)
