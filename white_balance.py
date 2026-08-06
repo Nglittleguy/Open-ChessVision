@@ -11,7 +11,7 @@ def calc_white_balance(frame, wb_x, wb_y, selection_size, frame_x, frame_y, thic
     wb_b = 0
 
     cc_roi = frame[wb_y-selection_size-thickness:wb_y+(selection_size-thickness), wb_x-selection_size-thickness:wb_x+(selection_size-thickness)]
-    cv2.imshow("Color Correction (Pre)", cc_roi)
+    # cv2.imshow("Color Correction (Pre)", cc_roi)
 
     wb_b, wb_g, wb_r, _ = cv2.mean(cc_roi)
     target_avg = (wb_b + wb_g + wb_r) / 3.0
