@@ -30,7 +30,7 @@ def track(frame):
   
 def straighten_chessboard(frame, board_centers):
   board_corner_1 = board_corner_2 = board_corner_3 = board_corner_4 = (0,0)
-  straightened_corners = [(30,30), (30, 500), (500, 500), (500, 30)]
+  straightened_corners = [(30,30), (30, 430), (430, 430), (430, 30)]
 
   if len(board_centers) == 4:
     board_corner_1 = min(board_centers, key=(lambda x: math.dist((0,0), x)))
@@ -41,7 +41,7 @@ def straighten_chessboard(frame, board_centers):
     corners = [board_corner_1, board_corner_2, board_corner_3, board_corner_4]
 
     transformation = cv2.getPerspectiveTransform(np.float32(corners), np.float32(straightened_corners))
-    return cv2.warpPerspective(frame, transformation, (530, 530))
+    return cv2.warpPerspective(frame, transformation, (450, 450))
 
   else:
     return frame

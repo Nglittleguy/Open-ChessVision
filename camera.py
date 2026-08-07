@@ -214,7 +214,7 @@ while rval:
 
         if selection_stage > 1:
             board_frame = straighten_chessboard(board_frame, selection[1]["centers"])
-
+            
         board_frame = add_white_balance(board_frame, wb)
 
         if selection[selection_stage]["x"] != 0 and selection[selection_stage]["y"] != 0:
@@ -247,6 +247,11 @@ while rval:
             cv2.circle(board_frame, c, 3, selection[selection_stage]["color"], 3)
             cv2.circle(board_frame, c, 5, (255, 255, 255), 2)
     
+    if selection_stage > 1:
+        for x in range(8):
+            for y in range(8):
+                cv2.rectangle(board_frame, (30+x*50, 30+y*50), (30+(x+1)*50, 30+(y+1)*50), (150, 0, 255), 1)
+
     cv2.imshow("Samples", sample_frame)
     cv2.imshow("Board", board_frame)
 
@@ -256,6 +261,10 @@ while rval:
         selection_stage = selection_stage + 1
         if selection_stage >= len(selection):
             break
+    if key == ord('b'): # b for back
+        if selection_stage != 0:
+            selection_stage = selection_stage - 1
+
 
 cv2.destroyAllWindows()
 
