@@ -2,7 +2,7 @@ import cv2
 from color_mask import color_mask
 from white_balance import calc_white_balance, add_white_balance
 from hue_picker import calc_hue
-from tracking import track
+from tracking import track, straighten_chessboard
 from PIL import Image
 import numpy as np
 import pandas
@@ -210,6 +210,11 @@ while rval:
         
         # selection[selection_stage]["range"] = cv2.getTrackbarPos('Range', 'Range Selection')
         sample_frame = add_white_balance(sample_frame, wb)
+
+
+        if selection_stage > 1:
+            board_frame = straighten_chessboard(board_frame, selection[1]["centers"])
+
         board_frame = add_white_balance(board_frame, wb)
 
         if selection[selection_stage]["x"] != 0 and selection[selection_stage]["y"] != 0:
