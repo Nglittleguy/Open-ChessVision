@@ -71,11 +71,21 @@ while rval:
 
 cv2.destroyAllWindows()
 
+callibration_x_list = [zones[0]['xy'][0], zones[1]['xy'][0]]
+callibration_y_list = [zones[0]['xy'][1], zones[1]['xy'][1]]
+board_x_list = [zones[2]['xy'][0], zones[3]['xy'][0]]
+board_y_list = [zones[2]['xy'][1], zones[3]['xy'][1]]
+
+zones[0]['xy'] = (min(callibration_x_list), min(callibration_y_list))
+zones[1]['xy'] = (max(callibration_x_list), max(callibration_y_list))
+zones[2]['xy'] = (min(board_x_list), min(board_y_list))
+zones[3]['xy'] = (max(board_x_list), max(board_y_list))
+
 '''
 Step 2: Sample Set Up Loop
 '''
-cv2.namedWindow("Range Selection")
-cv2.createTrackbar('Range', 'Range Selection', 0, 50, nothing)
+# cv2.namedWindow("Range Selection")
+# cv2.createTrackbar('Range', 'Range Selection', 0, 50, nothing)
 
 wb = (0,0,0)
 
@@ -105,7 +115,7 @@ selection = [
         "color": (150, 0, 255),
         "x": 0,
         "y": 0,
-        "range": 25,
+        "range": 10,
         "hue": 0
     }, 
     {
@@ -113,7 +123,7 @@ selection = [
         "color": (0, 0, 255),
         "x": 0,
         "y": 0,
-        "range": 25,
+        "range": 5,
         "hue": 0
     }, 
     {
@@ -121,7 +131,7 @@ selection = [
         "color": (0, 150, 255),
         "x": 0,
         "y": 0,
-        "range": 25,
+        "range": 10,
         "hue": 0
     }, 
     {
@@ -129,7 +139,7 @@ selection = [
         "color": (0, 255, 255),
         "x": 0,
         "y": 0,
-        "range": 25,
+        "range": 10,
         "hue": 0
     }, 
     {
@@ -137,7 +147,7 @@ selection = [
         "color": (0, 255, 0),
         "x": 0,
         "y": 0,
-        "range": 25,
+        "range": 30,
         "hue": 0
     }, 
     {
@@ -145,7 +155,7 @@ selection = [
         "color": (255, 0, 0),
         "x": 0,
         "y": 0,
-        "range": 25,
+        "range": 10,
         "hue": 0
     }, 
     {
@@ -189,7 +199,7 @@ while rval:
             wb = calc_white_balance(sample_frame, selection[0]["x"], selection[0]["y"], SELECTION_SIZE, sample_frame_x, sample_frame_y, SELECTION_THICKNESS)
             assert len(wb) == 3
         
-        selection[selection_stage]["range"] = cv2.getTrackbarPos('Range', 'Range Selection')
+        # selection[selection_stage]["range"] = cv2.getTrackbarPos('Range', 'Range Selection')
         sample_frame = add_white_balance(sample_frame, wb)
         board_frame = add_white_balance(board_frame, wb)
 
@@ -228,7 +238,6 @@ while rval:
         selection_stage = selection_stage + 1
         if selection_stage >= len(selection):
             break
-    
 
 cv2.destroyAllWindows()
 

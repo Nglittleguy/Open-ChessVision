@@ -31,10 +31,10 @@ def color_limits(hue, range):
 def color_mask(frame, hue, range):
   low, high = color_limits(hue, range)
 
-  frame_hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
-  frame_hsv = cv2.resize(frame_hsv,(200,200))
-  
-  frame_blur = cv2.blur(frame_hsv, (5,5))
-  frame_mask = cv2.inRange(frame_blur, low, high)
+  frame_blur = cv2.blur(frame, (10,10))
+  cv2.imshow("Blurred", frame_blur)
+
+  frame_hsv = cv2.cvtColor(frame_blur, cv2.COLOR_BGR2HSV)
+  frame_mask = cv2.inRange(frame_hsv, low, high)
   
   return dilate(erode(frame_mask, KERNEL_SIZE), KERNEL_SIZE)
