@@ -2,6 +2,7 @@ import cv2
 from color_mask import color_mask
 from white_balance import calc_white_balance, add_white_balance
 from hue_picker import calc_hue
+from tracking import track
 from PIL import Image
 import numpy as np
 import pandas
@@ -108,7 +109,8 @@ selection = [
         "x": 0,
         "y": 0,
         "range": 25,
-        "hue": 0
+        "hue": 0,
+        "centers": []
     }, 
     {
         "name": "Board",
@@ -116,7 +118,8 @@ selection = [
         "x": 0,
         "y": 0,
         "range": 10,
-        "hue": 0
+        "hue": 0,
+        "centers": []
     }, 
     {
         "name": "King",
@@ -124,7 +127,8 @@ selection = [
         "x": 0,
         "y": 0,
         "range": 5,
-        "hue": 0
+        "hue": 0,
+        "centers": []
     }, 
     {
         "name": "Queen",
@@ -132,7 +136,8 @@ selection = [
         "x": 0,
         "y": 0,
         "range": 10,
-        "hue": 0
+        "hue": 0,
+        "centers": []
     }, 
     {
         "name": "Bishop",
@@ -140,7 +145,8 @@ selection = [
         "x": 0,
         "y": 0,
         "range": 10,
-        "hue": 0
+        "hue": 0,
+        "centers": []
     }, 
     {
         "name": "Knight",
@@ -148,7 +154,8 @@ selection = [
         "x": 0,
         "y": 0,
         "range": 30,
-        "hue": 0
+        "hue": 0,
+        "centers": []
     }, 
     {
         "name": "Rook",
@@ -156,7 +163,8 @@ selection = [
         "x": 0,
         "y": 0,
         "range": 10,
-        "hue": 0
+        "hue": 0,
+        "centers": []
     }, 
     {
         "name": "Pawn",
@@ -164,7 +172,8 @@ selection = [
         "x": 0,
         "y": 0,
         "range": 25,
-        "hue": 0
+        "hue": 0,
+        "centers": []
     }, 
     
 ]
@@ -207,6 +216,7 @@ while rval:
             selection[selection_stage]["hue"] = calc_hue(sample_frame, selection[selection_stage]["x"], selection[selection_stage]["y"], SELECTION_SIZE, sample_frame_x, sample_frame_y, SELECTION_THICKNESS)
         
         mask_frame = color_mask(board_frame, selection[selection_stage]["hue"], selection[selection_stage]["range"])
+        selection[selection_stage]["centers"] = track(mask_frame)
 
     cv2.setMouseCallback('Samples', sample_event)
     
@@ -221,13 +231,16 @@ while rval:
         
         cv2.putText(
             board_frame, 
-            "Color", 
+            "Count: " + str(len(selection[selection_stage]["centers"])), 
             (30,30), 
             cv2.FONT_HERSHEY_SIMPLEX, 
             1, 
             (int(bgr_selected[0]), int(bgr_selected[1]), int(bgr_selected[2])),
             1)
-        cv2.imshow("Mask", mask_frame)
+        # cv2.imshow("Mask", mask_frame)
+        for c in selection[selection_stage]["centers"]:
+            cv2.circle(board_frame, c, 3, selection[selection_stage]["color"], 3)
+            cv2.circle(board_frame, c, 5, (255, 255, 255), 2)
     
     cv2.imshow("Samples", sample_frame)
     cv2.imshow("Board", board_frame)

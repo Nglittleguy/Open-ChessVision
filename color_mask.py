@@ -32,8 +32,6 @@ def color_mask(frame, hue, range):
   low, high = color_limits(hue, range)
 
   frame_blur = cv2.blur(frame, (10,10))
-  cv2.imshow("Blurred", frame_blur)
-
   frame_hsv = cv2.cvtColor(frame_blur, cv2.COLOR_BGR2HSV)
   frame_mask = cv2.inRange(frame_hsv, low, high)
   
