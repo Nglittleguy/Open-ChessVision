@@ -2,6 +2,13 @@ import cv2
 import numpy as np
 import math
 
+ROTATION_ORDER = [
+  None,
+  cv2.ROTATE_90_CLOCKWISE,
+  cv2.ROTATE_180,
+  cv2.ROTATE_90_COUNTERCLOCKWISE
+]
+
 def edges(frame):
   return cv2.Canny(frame, 30, 200)
 
@@ -23,12 +30,11 @@ def centers(contour_list):
 
 def track(frame):
   edge = edges(frame)
-  cv2.imshow("Edges", edge)
   contour_list = contours(edge)
   return centers(contour_list)
 
   
-def straighten_chessboard(frame, board_centers):
+def straighten_chessboard(frame, board_centers, rotation):
   board_corner_1 = board_corner_2 = board_corner_3 = board_corner_4 = (0,0)
   straightened_corners = [(30,30), (30, 430), (430, 430), (430, 30)]
 
@@ -41,7 +47,12 @@ def straighten_chessboard(frame, board_centers):
     corners = [board_corner_1, board_corner_2, board_corner_3, board_corner_4]
 
     transformation = cv2.getPerspectiveTransform(np.float32(corners), np.float32(straightened_corners))
-    return cv2.warpPerspective(frame, transformation, (450, 450))
+    straightened_frame = cv2.warpPerspective(frame, transformation, (460, 460))
+
+    if rotation:
+      straightened_frame = cv2.rotate(straightened_frame, ROTATION_ORDER[rotation % 4])
+
+    return straightened_frame
 
   else:
     return frame

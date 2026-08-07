@@ -13,7 +13,7 @@ def calc_hue(frame, x, y, selection_size, frame_x, frame_y, thickness):
             return 0
         
         hue_roi_hsv = cv2.cvtColor(hue_roi, cv2.COLOR_BGR2HSV)
-        hues = hue_roi_hsv[:, 0]
+        hues = hue_roi_hsv[:, :, 0]
         hue_rad = hues * (2.0 * np.pi / 180.0)
 
         mean_sin = np.mean(np.sin(hue_rad))
@@ -21,7 +21,6 @@ def calc_hue(frame, x, y, selection_size, frame_x, frame_y, thickness):
         mean_hue_rad = np.arctan2(mean_sin, mean_cos)
 
         mean_hue = (mean_hue_rad * 180.0 / (2.0 * np.pi)) % 180.0
-        print(mean_hue)
         return mean_hue
     else:
         return 0

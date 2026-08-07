@@ -1,7 +1,7 @@
 import cv2
 from color_mask import color_mask
 from white_balance import calc_white_balance, add_white_balance
-from hue_picker import calc_hue
+from hue_picker_rad import calc_hue
 from tracking import track, straighten_chessboard
 from PIL import Image
 import numpy as np
@@ -85,11 +85,10 @@ zones[3]['xy'] = (max(board_x_list), max(board_y_list))
 '''
 Step 2: Sample Set Up Loop
 '''
-# cv2.namedWindow("Range Selection")
-# cv2.createTrackbar('Range', 'Range Selection', 0, 50, nothing)
+cv2.namedWindow("Adjustments")
 
 wb = (0,0,0)
-
+board_rotation = 0
 selection_stage = 0
 '''
 0: White
@@ -110,43 +109,48 @@ selection = [
         "y": 0,
         "range": 25,
         "hue": 0,
-        "centers": []
+        "centers": [],
+        "offset": 0
     }, 
     {
         "name": "Board",
         "color": (150, 0, 255),
         "x": 0,
         "y": 0,
-        "range": 10,
+        "range": 5,
         "hue": 0,
-        "centers": []
+        "centers": [],
+        "offset": 0
     }, 
     {
         "name": "King",
         "color": (0, 0, 255),
         "x": 0,
         "y": 0,
-        "range": 5,
+        "range": 3,
         "hue": 0,
-        "centers": []
+        "centers": [],
+        "offset": 0
     }, 
     {
         "name": "Queen",
         "color": (0, 150, 255),
         "x": 0,
         "y": 0,
-        "range": 10,
+        "range": 5,
         "hue": 0,
-        "centers": []
+        "centers": [],
+        "offset": 0
     }, 
     {
         "name": "Bishop",
         "color": (0, 255, 255),
         "x": 0,
         "y": 0,
-        "range": 10,
+        "range": 5,
         "hue": 0,
-        "centers": []
+        "centers": [],
+        "offset": 0
     }, 
     {
         "name": "Knight",
@@ -155,7 +159,8 @@ selection = [
         "y": 0,
         "range": 30,
         "hue": 0,
-        "centers": []
+        "centers": [],
+        "offset": 0
     }, 
     {
         "name": "Rook",
@@ -164,16 +169,18 @@ selection = [
         "y": 0,
         "range": 10,
         "hue": 0,
-        "centers": []
+        "centers": [],
+        "offset": 0
     }, 
     {
         "name": "Pawn",
         "color": (255, 0, 150),
         "x": 0,
         "y": 0,
-        "range": 25,
+        "range": 20,
         "hue": 0,
-        "centers": []
+        "centers": [],
+        "offset": 0
     }, 
     
 ]
@@ -197,6 +204,8 @@ while rval:
 
     if selection_stage > last_stage:
         last_stage = selection_stage
+        cv2.createTrackbar('Range', 'Adjustments', selection[selection_stage]['range'], 50, nothing)
+        cv2.createTrackbar('Y-Offset', 'Adjustments', selection[selection_stage]['offset'], 150, nothing)
 
     
     # Add white balance if set already
@@ -208,45 +217,42 @@ while rval:
             wb = calc_white_balance(sample_frame, selection[0]["x"], selection[0]["y"], SELECTION_SIZE, sample_frame_x, sample_frame_y, SELECTION_THICKNESS)
             assert len(wb) == 3
         
-        # selection[selection_stage]["range"] = cv2.getTrackbarPos('Range', 'Range Selection')
         sample_frame = add_white_balance(sample_frame, wb)
 
-
         if selection_stage > 1:
-            board_frame = straighten_chessboard(board_frame, selection[1]["centers"])
+            board_frame = straighten_chessboard(board_frame, selection[1]["centers"], board_rotation)
             
         board_frame = add_white_balance(board_frame, wb)
 
         if selection[selection_stage]["x"] != 0 and selection[selection_stage]["y"] != 0:
             selection[selection_stage]["hue"] = calc_hue(sample_frame, selection[selection_stage]["x"], selection[selection_stage]["y"], SELECTION_SIZE, sample_frame_x, sample_frame_y, SELECTION_THICKNESS)
+
+        selection[selection_stage]["range"] = cv2.getTrackbarPos('Range', "Adjustments")
+        selection[selection_stage]["offset"] = cv2.getTrackbarPos('Y-Offset', "Adjustments")
         
         mask_frame = color_mask(board_frame, selection[selection_stage]["hue"], selection[selection_stage]["range"])
         selection[selection_stage]["centers"] = track(mask_frame)
 
     cv2.setMouseCallback('Samples', sample_event)
     
-
+    # Keep Hue Picker on Callibration Window
     for stage in range(selection_stage + 1):
         cv2.rectangle(sample_frame, (selection[stage]["x"]-SELECTION_SIZE, selection[stage]["y"]-SELECTION_SIZE), (selection[stage]["x"]+SELECTION_SIZE, selection[stage]["y"]+SELECTION_SIZE), selection[stage]["color"], SELECTION_THICKNESS)  
         cv2.putText(sample_frame, selection[stage]["name"], (selection[stage]["x"]-30, selection[stage]["y"]-30), cv2.FONT_HERSHEY_SIMPLEX, 1, selection[stage]["color"], 1)
-    
+
+    # Pick the Hue
     if selection_stage > 0:
         hsv_selected = np.uint8([[[selection[selection_stage]['hue'], 255, 255]]])
         bgr_selected = cv2.cvtColor(hsv_selected, cv2.COLOR_HSV2BGR)[0][0]
         
-        cv2.putText(
-            board_frame, 
-            "Count: " + str(len(selection[selection_stage]["centers"])), 
-            (30,30), 
-            cv2.FONT_HERSHEY_SIMPLEX, 
-            1, 
-            (int(bgr_selected[0]), int(bgr_selected[1]), int(bgr_selected[2])),
-            1)
+        cv2.putText(board_frame, "Count: " + str(len(selection[selection_stage]["centers"])), (30,30), cv2.FONT_HERSHEY_SIMPLEX, 1, (int(bgr_selected[0]), int(bgr_selected[1]), int(bgr_selected[2])),
+                    1)
         # cv2.imshow("Mask", mask_frame)
         for c in selection[selection_stage]["centers"]:
-            cv2.circle(board_frame, c, 3, selection[selection_stage]["color"], 3)
-            cv2.circle(board_frame, c, 5, (255, 255, 255), 2)
-    
+            cv2.circle(board_frame, np.add(c, (0,selection[selection_stage]["offset"])), 3, selection[selection_stage]["color"], 3)
+            cv2.circle(board_frame, np.add(c, (0,selection[selection_stage]["offset"])), 5, (255, 255, 255), 2)
+
+    # Draw the board outline
     if selection_stage > 1:
         for x in range(8):
             for y in range(8):
@@ -264,6 +270,10 @@ while rval:
     if key == ord('b'): # b for back
         if selection_stage != 0:
             selection_stage = selection_stage - 1
+    if key == ord('<'): # < for rotate CCW
+        board_rotation = (board_rotation + 3) % 4
+    if key == ord('>'): # > for rotate CCW
+        board_rotation = (board_rotation + 1) % 4
 
 
 cv2.destroyAllWindows()
