@@ -1,8 +1,8 @@
 import cv2
-from color_mask import color_mask
+from color_mask import color_mask, hue2brg
 from white_balance import calc_white_balance, add_white_balance
 from hue_picker_rad import calc_hue
-from tracking import track, straighten_chessboard
+from tracking import track, straighten_chessboard, track_piece_side
 from PIL import Image
 import numpy as np
 import pandas
@@ -99,6 +99,7 @@ selection_stage = 0
 5: Knight
 6: Rook
 7: Pawn
+8: Starting
 '''
 
 selection = [
@@ -110,7 +111,8 @@ selection = [
         "range": 25,
         "hue": 0,
         "centers": [],
-        "offset": 0
+        "offset": 0,
+        "pieces": []
     }, 
     {
         "name": "Board",
@@ -120,7 +122,8 @@ selection = [
         "range": 5,
         "hue": 0,
         "centers": [],
-        "offset": 0
+        "offset": 0,
+        "pieces": []
     }, 
     {
         "name": "King",
@@ -130,7 +133,9 @@ selection = [
         "range": 3,
         "hue": 0,
         "centers": [],
-        "offset": 0
+        "offset": 0,
+        "start": 2,
+        "pieces": []
     }, 
     {
         "name": "Queen",
@@ -140,7 +145,9 @@ selection = [
         "range": 5,
         "hue": 0,
         "centers": [],
-        "offset": 0
+        "offset": 0,
+        "start": 2,
+        "pieces": []
     }, 
     {
         "name": "Bishop",
@@ -150,7 +157,9 @@ selection = [
         "range": 5,
         "hue": 0,
         "centers": [],
-        "offset": 0
+        "offset": 0,
+        "start": 4,
+        "pieces": []
     }, 
     {
         "name": "Knight",
@@ -160,7 +169,9 @@ selection = [
         "range": 30,
         "hue": 0,
         "centers": [],
-        "offset": 0
+        "offset": 0,
+        "start": 4,
+        "pieces": []
     }, 
     {
         "name": "Rook",
@@ -170,7 +181,9 @@ selection = [
         "range": 10,
         "hue": 0,
         "centers": [],
-        "offset": 0
+        "offset": 0,
+        "start": 4,
+        "pieces": []
     }, 
     {
         "name": "Pawn",
@@ -180,8 +193,13 @@ selection = [
         "range": 20,
         "hue": 0,
         "centers": [],
-        "offset": 0
+        "offset": 0,
+        "start": 16,
+        "pieces": []
     }, 
+    {
+        "name": "Starting"
+    }
     
 ]
 
@@ -196,16 +214,19 @@ while rval:
     rval, frame = vc.read()
     sample_frame = frame[zones[0]['xy'][1]:zones[1]['xy'][1], zones[0]['xy'][0]:zones[1]['xy'][0]]
     board_frame = frame[zones[2]['xy'][1]:zones[3]['xy'][1], zones[2]['xy'][0]:zones[3]['xy'][0]]
+    board_frame_raw = board_frame.copy()
     
     sample_frame_x = int(abs(zones[0]['xy'][0]-zones[1]['xy'][0]))
     sample_frame_y = int(abs(zones[0]['xy'][1]-zones[1]['xy'][1]))
     
     curr_time = time.time()
+    curr_time_2 = time.time()
 
     if selection_stage > last_stage:
         last_stage = selection_stage
-        cv2.createTrackbar('Range', 'Adjustments', selection[selection_stage]['range'], 50, nothing)
-        cv2.createTrackbar('Y-Offset', 'Adjustments', selection[selection_stage]['offset'], 150, nothing)
+        if selection_stage < 8:
+            cv2.createTrackbar('Range', 'Adjustments', selection[selection_stage]['range'], 50, nothing)
+            cv2.createTrackbar('Y-Offset', 'Adjustments', selection[selection_stage]['offset'], 150, nothing)
 
     
     # Add white balance if set already
@@ -220,33 +241,33 @@ while rval:
         sample_frame = add_white_balance(sample_frame, wb)
 
         if selection_stage > 1:
-            board_frame = straighten_chessboard(board_frame, selection[1]["centers"], board_rotation)
+            board_frame = straighten_chessboard(board_frame_raw, selection[1]["centers"], board_rotation)
             
         board_frame = add_white_balance(board_frame, wb)
+        board_frame_clear = board_frame.copy()
 
-        if selection[selection_stage]["x"] != 0 and selection[selection_stage]["y"] != 0:
+        if selection_stage < 8 and selection[selection_stage]["x"] != 0 and selection[selection_stage]["y"] != 0:
             selection[selection_stage]["hue"] = calc_hue(sample_frame, selection[selection_stage]["x"], selection[selection_stage]["y"], SELECTION_SIZE, sample_frame_x, sample_frame_y, SELECTION_THICKNESS)
 
-        selection[selection_stage]["range"] = cv2.getTrackbarPos('Range', "Adjustments")
-        selection[selection_stage]["offset"] = cv2.getTrackbarPos('Y-Offset', "Adjustments")
+        if selection_stage < 8:
+            selection[selection_stage]["range"] = cv2.getTrackbarPos('Range', "Adjustments")
+            selection[selection_stage]["offset"] = cv2.getTrackbarPos('Y-Offset', "Adjustments")
         
-        mask_frame = color_mask(board_frame, selection[selection_stage]["hue"], selection[selection_stage]["range"])
-        selection[selection_stage]["centers"] = track(mask_frame)
+            mask_frame = color_mask(board_frame, selection[selection_stage]["hue"], selection[selection_stage]["range"])
+            selection[selection_stage]["centers"] = track(mask_frame)
 
     cv2.setMouseCallback('Samples', sample_event)
     
     # Keep Hue Picker on Callibration Window
-    for stage in range(selection_stage + 1):
+    for stage in range(min(selection_stage + 1, 8)):
         cv2.rectangle(sample_frame, (selection[stage]["x"]-SELECTION_SIZE, selection[stage]["y"]-SELECTION_SIZE), (selection[stage]["x"]+SELECTION_SIZE, selection[stage]["y"]+SELECTION_SIZE), selection[stage]["color"], SELECTION_THICKNESS)  
         cv2.putText(sample_frame, selection[stage]["name"], (selection[stage]["x"]-30, selection[stage]["y"]-30), cv2.FONT_HERSHEY_SIMPLEX, 1, selection[stage]["color"], 1)
 
     # Pick the Hue
-    if selection_stage > 0:
-        hsv_selected = np.uint8([[[selection[selection_stage]['hue'], 255, 255]]])
-        bgr_selected = cv2.cvtColor(hsv_selected, cv2.COLOR_HSV2BGR)[0][0]
+    if selection_stage > 0 and selection_stage < 8:
         
-        cv2.putText(board_frame, "Count: " + str(len(selection[selection_stage]["centers"])), (30,30), cv2.FONT_HERSHEY_SIMPLEX, 1, (int(bgr_selected[0]), int(bgr_selected[1]), int(bgr_selected[2])),
-                    1)
+        cv2.putText(board_frame, "Count: " + str(len(selection[selection_stage]["centers"])), (30,30), cv2.FONT_HERSHEY_SIMPLEX, 1, hue2brg(selection[selection_stage]["hue"]), 1)
+
         # cv2.imshow("Mask", mask_frame)
         for c in selection[selection_stage]["centers"]:
             cv2.circle(board_frame, np.add(c, (0,selection[selection_stage]["offset"])), 3, selection[selection_stage]["color"], 3)
@@ -258,10 +279,32 @@ while rval:
             for y in range(8):
                 cv2.rectangle(board_frame, (30+x*50, 30+y*50), (30+(x+1)*50, 30+(y+1)*50), (150, 0, 255), 1)
 
+    if selection_stage == 8:
+        for i in range(1, 8):
+            
+            selection[i]["hue"] = calc_hue(sample_frame, selection[i]["x"], selection[i]["y"], SELECTION_SIZE, sample_frame_x, sample_frame_y, SELECTION_THICKNESS)
+            if i == 1:
+                board_frame_to_mask = board_frame_raw
+            else:
+                board_frame_to_mask = board_frame_clear
+            mask_frame = color_mask(board_frame_to_mask, selection[i]["hue"], selection[i]["range"])
+            selection[i]["centers"] = track(mask_frame)
+
+            if i > 1:
+                selection[i]["pieces"] = track_piece_side(board_frame_clear, selection[i]["centers"], selection[i]["hue"], board_frame)
+                for p in selection[i]["pieces"]:
+                    cv2.circle(board_frame, np.add(p["center"], (0,selection[i]["offset"])), 5, selection[i]["color"], 3)
+                    piece_color = (0, 0, 0)
+                    if p["white"]:
+                        piece_color = (255, 255, 255)
+                    cv2.circle(board_frame, np.add(p["center"], (0,selection[i]["offset"])), 3, piece_color, 2)
+
+
+
     cv2.imshow("Samples", sample_frame)
     cv2.imshow("Board", board_frame)
 
-    key = cv2.waitKey(10) & 0xFF
+    key = cv2.waitKey(100) & 0xFF
 
     if key == ord(' '): # next on spacebar
         selection_stage = selection_stage + 1
@@ -274,7 +317,6 @@ while rval:
         board_rotation = (board_rotation + 3) % 4
     if key == ord('>'): # > for rotate CCW
         board_rotation = (board_rotation + 1) % 4
-
 
 cv2.destroyAllWindows()
 
