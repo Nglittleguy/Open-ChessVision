@@ -1,5 +1,5 @@
-from piece_enums import PieceColor, PieceType
-from piece import Piece
+from chess.pieces.piece_enums import PieceColor, PieceType
+from chess.pieces.piece import Piece
 import numpy as np
 
 def within_bounds (position: tuple[int,int]):

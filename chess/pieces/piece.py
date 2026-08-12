@@ -1,4 +1,4 @@
-from piece_enums import PieceColor, PieceType
+from chess.pieces.piece_enums import PieceColor, PieceType
 
 class Piece:
 

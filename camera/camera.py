@@ -3,6 +3,9 @@ from camera.color_mask import color_mask, hue2brg
 from camera.white_balance import calc_white_balance, add_white_balance
 from camera.hue_picker_rad import calc_hue
 from camera.tracking import track, straighten_chessboard, track_piece_side
+from chess.pieces.piece import PieceType
+from chess.board.board_start_state import INIT_BOARD_STATE
+from chess.board.board_index import xy2tracking, notation2xy
 from PIL import Image
 import numpy as np
 import pandas
@@ -112,7 +115,8 @@ def run():
             "hue": 0,
             "centers": [],
             "offset": 0,
-            "pieces": []
+            "pieces": [],
+            "type": PieceType.NULL
         }, 
         {
             "name": "Board",
@@ -123,7 +127,8 @@ def run():
             "hue": 0,
             "centers": [],
             "offset": 0,
-            "pieces": []
+            "pieces": [],
+            "type": PieceType.NULL
         }, 
         {
             "name": "King",
@@ -135,7 +140,8 @@ def run():
             "centers": [],
             "offset": 0,
             "start": 2,
-            "pieces": []
+            "pieces": [],
+            "type": PieceType.KING
         }, 
         {
             "name": "Queen",
@@ -147,7 +153,8 @@ def run():
             "centers": [],
             "offset": 0,
             "start": 2,
-            "pieces": []
+            "pieces": [],
+            "type": PieceType.QUEEN
         }, 
         {
             "name": "Bishop",
@@ -159,7 +166,8 @@ def run():
             "centers": [],
             "offset": 0,
             "start": 4,
-            "pieces": []
+            "pieces": [],
+            "type": PieceType.BISHOP
         }, 
         {
             "name": "Knight",
@@ -171,7 +179,8 @@ def run():
             "centers": [],
             "offset": 0,
             "start": 4,
-            "pieces": []
+            "pieces": [],
+            "type": PieceType.KNIGHT
         }, 
         {
             "name": "Rook",
@@ -183,7 +192,8 @@ def run():
             "centers": [],
             "offset": 0,
             "start": 4,
-            "pieces": []
+            "pieces": [],
+            "type": PieceType.ROOK
         }, 
         {
             "name": "Pawn",
@@ -195,7 +205,8 @@ def run():
             "centers": [],
             "offset": 0,
             "start": 16,
-            "pieces": []
+            "pieces": [],
+            "type": PieceType.PAWN
         }, 
         {
             "name": "Starting"
@@ -297,6 +308,8 @@ def run():
                         if p["white"]:
                             piece_color = (255, 255, 255)
                         cv2.circle(board_frame, np.add(p["center"], (0,selection[i]["offset"])), 3, piece_color, 2)
+
+            
 
 
 

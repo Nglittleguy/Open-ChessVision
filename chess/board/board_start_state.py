@@ -1,0 +1,36 @@
+from chess.pieces.piece import Piece, PieceType, PieceColor
+from chess.board.board_index import notation2xy
+
+INIT_BOARD_STATE = [
+  Piece(PieceColor.WHITE, PieceType.KING, notation2xy("d1")),
+  Piece(PieceColor.WHITE, PieceType.QUEEN, notation2xy("e1")),
+  Piece(PieceColor.WHITE, PieceType.BISHOP, notation2xy("f1")),
+  Piece(PieceColor.WHITE, PieceType.BISHOP, notation2xy("c1")),
+  Piece(PieceColor.WHITE, PieceType.KNIGHT, notation2xy("b1")),
+  Piece(PieceColor.WHITE, PieceType.KNIGHT, notation2xy("g1")),
+  Piece(PieceColor.WHITE, PieceType.ROOK, notation2xy("a1")),
+  Piece(PieceColor.WHITE, PieceType.ROOK, notation2xy("h1")),
+  Piece(PieceColor.WHITE, PieceType.PAWN, notation2xy("a2")),
+  Piece(PieceColor.WHITE, PieceType.PAWN, notation2xy("b2")),
+  Piece(PieceColor.WHITE, PieceType.PAWN, notation2xy("c2")),
+  Piece(PieceColor.WHITE, PieceType.PAWN, notation2xy("d2")),
+  Piece(PieceColor.WHITE, PieceType.PAWN, notation2xy("e2")),
+  Piece(PieceColor.WHITE, PieceType.PAWN, notation2xy("f2")),
+  Piece(PieceColor.WHITE, PieceType.PAWN, notation2xy("g2")),
+
+  Piece(PieceColor.BLACK, PieceType.KING, notation2xy("e8")),
+  Piece(PieceColor.BLACK, PieceType.QUEEN, notation2xy("d8")),
+  Piece(PieceColor.BLACK, PieceType.BISHOP, notation2xy("f8")),
+  Piece(PieceColor.BLACK, PieceType.BISHOP, notation2xy("c8")),
+  Piece(PieceColor.BLACK, PieceType.KNIGHT, notation2xy("b8")),
+  Piece(PieceColor.BLACK, PieceType.KNIGHT, notation2xy("g8")),
+  Piece(PieceColor.BLACK, PieceType.ROOK, notation2xy("a8")),
+  Piece(PieceColor.BLACK, PieceType.ROOK, notation2xy("h8")),
+  Piece(PieceColor.BLACK, PieceType.PAWN, notation2xy("a7")),
+  Piece(PieceColor.BLACK, PieceType.PAWN, notation2xy("b7")),
+  Piece(PieceColor.BLACK, PieceType.PAWN, notation2xy("c7")),
+  Piece(PieceColor.BLACK, PieceType.PAWN, notation2xy("d7")),
+  Piece(PieceColor.BLACK, PieceType.PAWN, notation2xy("e7")),
+  Piece(PieceColor.BLACK, PieceType.PAWN, notation2xy("f7")),
+  Piece(PieceColor.BLACK, PieceType.PAWN, notation2xy("g7")),
+]
