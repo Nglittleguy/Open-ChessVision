@@ -1,11 +1,14 @@
 import cv2
 import numpy as np
 import math
-from color_mask import hue2brg
+from camera.color_mask import hue2brg
 
 TRACKING_HUE_THRESHOLD = 3
 TRACKING_PIECE_FRAME = 15
 EXTERIOR_THRESHOLD = 100
+
+BOARD_SIZE = 400
+BORDER_SIZE = 30
 
 ROTATION_ORDER = [
   None,
@@ -41,7 +44,7 @@ def track(frame):
   
 def straighten_chessboard(frame, board_centers, rotation):
   board_corner_1 = board_corner_2 = board_corner_3 = board_corner_4 = (0,0)
-  straightened_corners = [(30,30), (30, 430), (430, 430), (430, 30)]
+  straightened_corners = [(BORDER_SIZE,BORDER_SIZE), (BORDER_SIZE, BORDER_SIZE+BOARD_SIZE), (BORDER_SIZE+BOARD_SIZE, BORDER_SIZE+BOARD_SIZE), (BORDER_SIZE+BOARD_SIZE, BORDER_SIZE)]
 
   if len(board_centers) == 4:
     board_corner_1 = min(board_centers, key=(lambda x: math.dist((0,0), x)))
@@ -52,7 +55,7 @@ def straighten_chessboard(frame, board_centers, rotation):
     corners = [board_corner_1, board_corner_2, board_corner_3, board_corner_4]
 
     transformation = cv2.getPerspectiveTransform(np.float32(corners), np.float32(straightened_corners))
-    straightened_frame = cv2.warpPerspective(frame, transformation, (460, 460))
+    straightened_frame = cv2.warpPerspective(frame, transformation, (BORDER_SIZE+BOARD_SIZE+BORDER_SIZE, BORDER_SIZE+BOARD_SIZE+BORDER_SIZE))
 
     if rotation:
       straightened_frame = cv2.rotate(straightened_frame, ROTATION_ORDER[rotation % 4])
