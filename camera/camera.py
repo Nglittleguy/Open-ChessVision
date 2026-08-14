@@ -2,7 +2,7 @@ import cv2
 from camera.color_mask import color_mask, hue2brg
 from camera.white_balance import calc_white_balance, add_white_balance
 from camera.hue_picker_rad import calc_hue
-from camera.tracking import track, straighten_chessboard, track_piece_side
+from camera.tracking import track, straighten_chessboard, track_piece_side, CELL_SIZE, BORDER_SIZE
 from chess.pieces.piece import PieceType
 from chess.board.board_start_state import INIT_BOARD_STATE
 from chess.board.board_index import xy2tracking, notation2xy
@@ -264,6 +264,7 @@ def run():
                 selection[selection_stage]["offset"] = cv2.getTrackbarPos('Y-Offset', "Adjustments")
             
                 mask_frame = color_mask(board_frame, selection[selection_stage]["hue"], selection[selection_stage]["range"])
+                # cv2.imshow("Mask", mask_frame)
                 selection[selection_stage]["centers"] = track(mask_frame)
 
         cv2.setMouseCallback('Samples', sample_event)
@@ -276,7 +277,7 @@ def run():
         # Pick the Hue
         if selection_stage > 0 and selection_stage < 8:
             
-            cv2.putText(board_frame, "Count: " + str(len(selection[selection_stage]["centers"])), (30,30), cv2.FONT_HERSHEY_SIMPLEX, 1, hue2brg(selection[selection_stage]["hue"]), 1)
+            cv2.putText(board_frame, "Count: " + str(len(selection[selection_stage]["centers"])), (BORDER_SIZE,BORDER_SIZE), cv2.FONT_HERSHEY_SIMPLEX, 1, hue2brg(selection[selection_stage]["hue"]), 1)
 
             # cv2.imshow("Mask", mask_frame)
             for c in selection[selection_stage]["centers"]:
@@ -287,7 +288,7 @@ def run():
         if selection_stage > 1:
             for x in range(8):
                 for y in range(8):
-                    cv2.rectangle(board_frame, (30+x*50, 30+y*50), (30+(x+1)*50, 30+(y+1)*50), (150, 0, 255), 1)
+                    cv2.rectangle(board_frame, (BORDER_SIZE+x*CELL_SIZE, BORDER_SIZE+y*CELL_SIZE), (BORDER_SIZE+(x+1)*CELL_SIZE, BORDER_SIZE+(y+1)*CELL_SIZE), (150, 0, 255), 1)
 
         if selection_stage == 8:
             for i in range(1, 8):
@@ -308,9 +309,6 @@ def run():
                         if p["white"]:
                             piece_color = (255, 255, 255)
                         cv2.circle(board_frame, np.add(p["center"], (0,selection[i]["offset"])), 3, piece_color, 2)
-
-            
-
 
 
         cv2.imshow("Samples", sample_frame)
