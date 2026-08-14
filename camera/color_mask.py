@@ -5,7 +5,7 @@ import cv2
 KERNEL_SIZE = 7
 BLUR_SIZE = 5
 SATURATION_LIMIT = 70
-BRIGHTNESS_LIMIT = 0
+BRIGHTNESS_LIMIT = 100
 
 def erode(frame, size):
   kernel = np.ones((size, size), np.uint8)
@@ -31,7 +31,7 @@ def dilate(frame, size):
 
 #   return lowerLimit, upperLimit
 
-def color_mask(frame, hue, range):
+def color_mask(frame, hue, range, bright = BRIGHTNESS_LIMIT, sat = SATURATION_LIMIT):
 
   frame_blur = cv2.blur(frame, (BLUR_SIZE,BLUR_SIZE))
   frame_hsv = cv2.cvtColor(frame_blur, cv2.COLOR_BGR2HSV)
@@ -41,28 +41,28 @@ def color_mask(frame, hue, range):
   if hue >= 180-range:
     low_remaining = hue - (180 - range)
     low_upper_limit = np.array([low_remaining, 255, 255], dtype=np.uint8)
-    low_lower_limit = np.array([0, SATURATION_LIMIT, BRIGHTNESS_LIMIT], dtype=np.uint8)
+    low_lower_limit = np.array([0, sat, bright], dtype=np.uint8)
 
     high_upper_limit = np.array([180, 255, 255], dtype=np.uint8)
-    high_lower_limit = np.array([hue - range, SATURATION_LIMIT, BRIGHTNESS_LIMIT], dtype=np.uint8)
+    high_lower_limit = np.array([hue - range, sat, bright], dtype=np.uint8)
 
     frame_mask_1 = cv2.inRange(frame_hsv, low_lower_limit, low_upper_limit)
     frame_mask_2 = cv2.inRange(frame_hsv, high_lower_limit, high_upper_limit)
     frame_mask = cv2.bitwise_or(frame_mask_1, frame_mask_2)
   elif hue <= range:
     low_upper_limit = np.array([hue + range, 255, 255], dtype=np.uint8)
-    low_lower_limit = np.array([0, SATURATION_LIMIT, BRIGHTNESS_LIMIT], dtype=np.uint8)
+    low_lower_limit = np.array([0, sat, bright], dtype=np.uint8)
 
     high_remaining = 180 - (range - hue)
     high_upper_limit = np.array([180, 255, 255], dtype=np.uint8)
-    high_lower_limit = np.array([high_remaining, SATURATION_LIMIT, BRIGHTNESS_LIMIT], dtype=np.uint8)
+    high_lower_limit = np.array([high_remaining, sat, bright], dtype=np.uint8)
 
     frame_mask_1 = cv2.inRange(frame_hsv, low_lower_limit, low_upper_limit)
     frame_mask_2 = cv2.inRange(frame_hsv, high_lower_limit, high_upper_limit)
     frame_mask = cv2.bitwise_or(frame_mask_1, frame_mask_2)
     
   else:
-    lower_limit = np.array([hue - range, SATURATION_LIMIT, BRIGHTNESS_LIMIT], dtype=np.uint8)
+    lower_limit = np.array([hue - range, sat, bright], dtype=np.uint8)
     higher_limit = np.array([hue + range, 255, 255], dtype=np.uint8)
     frame_mask = cv2.inRange(frame_hsv, lower_limit, higher_limit)
 

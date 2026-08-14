@@ -5,7 +5,7 @@ from camera.hue_picker_rad import calc_hue
 from camera.tracking import track, straighten_chessboard, track_piece_side, CELL_SIZE, BORDER_SIZE
 from chess.pieces.piece import PieceType
 from chess.board.board_start_state import INIT_BOARD_STATE
-from chess.board.board_index import xy2tracking, notation2xy
+from chess.board.board_index import xy2tracking, notation2xy, coords2xy
 from PIL import Image
 import numpy as np
 import pandas
@@ -112,6 +112,8 @@ def run():
             "x": 0,
             "y": 0,
             "range": 25,
+            "brightness": 100,
+            "saturation": 100,
             "hue": 0,
             "centers": [],
             "offset": 0,
@@ -124,6 +126,8 @@ def run():
             "x": 0,
             "y": 0,
             "range": 5,
+            "brightness": 100,
+            "saturation": 100,
             "hue": 0,
             "centers": [],
             "offset": 0,
@@ -136,6 +140,8 @@ def run():
             "x": 0,
             "y": 0,
             "range": 3,
+            "brightness": 100,
+            "saturation": 100,
             "hue": 0,
             "centers": [],
             "offset": 0,
@@ -149,6 +155,8 @@ def run():
             "x": 0,
             "y": 0,
             "range": 5,
+            "brightness": 100,
+            "saturation": 100,
             "hue": 0,
             "centers": [],
             "offset": 0,
@@ -162,6 +170,8 @@ def run():
             "x": 0,
             "y": 0,
             "range": 5,
+            "brightness": 100,
+            "saturation": 100,
             "hue": 0,
             "centers": [],
             "offset": 0,
@@ -175,6 +185,8 @@ def run():
             "x": 0,
             "y": 0,
             "range": 30,
+            "brightness": 100,
+            "saturation": 100,
             "hue": 0,
             "centers": [],
             "offset": 0,
@@ -188,6 +200,8 @@ def run():
             "x": 0,
             "y": 0,
             "range": 10,
+            "brightness": 100,
+            "saturation": 100,
             "hue": 0,
             "centers": [],
             "offset": 0,
@@ -201,6 +215,8 @@ def run():
             "x": 0,
             "y": 0,
             "range": 20,
+            "brightness": 100,
+            "saturation": 100,
             "hue": 0,
             "centers": [],
             "offset": 0,
@@ -236,6 +252,8 @@ def run():
             last_stage = selection_stage
             if selection_stage < 8:
                 cv2.createTrackbar('Range', 'Adjustments', selection[selection_stage]['range'], 50, nothing)
+                cv2.createTrackbar('Brightness', 'Adjustments', selection[selection_stage]['brightness'], 255, nothing)
+                cv2.createTrackbar('Saturation', 'Adjustments', selection[selection_stage]['saturation'], 255, nothing)
                 cv2.createTrackbar('Y-Offset', 'Adjustments', selection[selection_stage]['offset'], 150, nothing)
 
         
@@ -263,7 +281,7 @@ def run():
                 selection[selection_stage]["range"] = cv2.getTrackbarPos('Range', "Adjustments")
                 selection[selection_stage]["offset"] = cv2.getTrackbarPos('Y-Offset', "Adjustments")
             
-                mask_frame = color_mask(board_frame, selection[selection_stage]["hue"], selection[selection_stage]["range"])
+                mask_frame = color_mask(board_frame, selection[selection_stage]["hue"], selection[selection_stage]["range"], selection[selection_stage]["brightness"], selection[selection_stage]["saturation"])
                 # cv2.imshow("Mask", mask_frame)
                 selection[selection_stage]["centers"] = track(mask_frame)
 
@@ -309,6 +327,7 @@ def run():
                         if p["white"]:
                             piece_color = (255, 255, 255)
                         cv2.circle(board_frame, np.add(p["center"], (0,selection[i]["offset"])), 3, piece_color, 2)
+
 
 
         cv2.imshow("Samples", sample_frame)

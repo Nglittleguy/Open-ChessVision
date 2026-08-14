@@ -1,5 +1,6 @@
 from chess.board.board import Board
-from camera.tracking import BOARD_SIZE, BORDER_SIZE
+from camera.tracking import BOARD_SIZE, BORDER_SIZE, CELL_SIZE
+import numpy as np
 
 def notation2xy(notation: str):
   col = notation[0]
@@ -24,7 +25,16 @@ def xy2notation(xy: tuple[int,int]):
 
 def xy2tracking(xy: tuple[int, int]):
   full_dimension = BOARD_SIZE + BORDER_SIZE + BORDER_SIZE
-  cell_dimension = BOARD_SIZE/8
-  top_left = (int(BORDER_SIZE + (xy[0] * cell_dimension)), int(full_dimension - (BORDER_SIZE + (xy[1] + 1) * cell_dimension)))
+  top_left = (int(BORDER_SIZE + (xy[0] * CELL_SIZE)), int(full_dimension - (BORDER_SIZE + (xy[1] + 1) * CELL_SIZE)))
 
   return top_left
+
+def coords2xy(coords: tuple[int, int]):
+  if coords[0] < BORDER_SIZE or coords[0] > BORDER_SIZE + BOARD_SIZE or coords[1] < BORDER_SIZE or coords[1] > BORDER_SIZE + BOARD_SIZE:
+    return None
+
+  col = int((coords[0] - BORDER_SIZE)/CELL_SIZE)
+  row = int((BOARD_SIZE - (coords[1] - BORDER_SIZE))/CELL_SIZE)
+  return (col, row)
+
+
