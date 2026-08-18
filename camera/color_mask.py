@@ -2,7 +2,8 @@ import numpy as np
 import cv2
 
 #Color is BRG
-KERNEL_SIZE = 7
+ERODE_KERNEL = 3
+DILATE_KERNEL = 7
 BLUR_SIZE = 5
 SATURATION_LIMIT = 70
 BRIGHTNESS_LIMIT = 100
@@ -66,7 +67,7 @@ def color_mask(frame, hue, range, bright = BRIGHTNESS_LIMIT, sat = SATURATION_LI
     higher_limit = np.array([hue + range, 255, 255], dtype=np.uint8)
     frame_mask = cv2.inRange(frame_hsv, lower_limit, higher_limit)
 
-  return dilate(erode(frame_mask, KERNEL_SIZE), KERNEL_SIZE)
+  return dilate(erode(frame_mask, ERODE_KERNEL), DILATE_KERNEL)
 
 def hue2brg(hue):
   hsv_selected = np.uint8([[[hue, 255, 255]]])

@@ -10,6 +10,7 @@ EXTERIOR_THRESHOLD = 100
 BOARD_SIZE = 400
 CELL_SIZE = int(BOARD_SIZE/8)
 BORDER_SIZE = 30
+DIFF_THRESHOLD = 5
 
 ROTATION_ORDER = [
   None,
@@ -33,6 +34,12 @@ def centers(contour_list):
       cx = int(M['m10']/M['m00'])
       cy = int(M['m01']/M['m00'])
       tracked_list.append((cx,cy))
+
+  def sort_coords(coord):
+    return (coord[0] + coord[1] * BORDER_SIZE)
+
+  tracked_list.sort(key=sort_coords)
+
   return tracked_list
       
 
@@ -42,16 +49,52 @@ def track(frame):
   contour_list = contours(edge)
   return centers(contour_list)
 
+
+# Assuming sorted centers
+def use_backup_corners(centers, backup):
+  if len(backup) == 4:
+    c_counter = 0 
+    for i in range(4):
+      print("Distance: ", backup[i], centers[c_counter], math.dist(centers[c_counter], backup[i]))
+      if math.dist(centers[c_counter], backup[i]) < DIFF_THRESHOLD:
+        c_counter = c_counter + 1
+
+    print("Match count:", c_counter)
+    print("Center", centers)
+    print("Backup", backup)
+    return c_counter >= 3 #if 3 corners match, then should be good to keep
+  return False
   
-def straighten_chessboard(frame, board_centers, rotation):
+# Assuming sorted centers
+def use_backup_filter(centers, backup):
+  if len(centers) < len(backup):
+    return False
+
+  b_counter = 0 
+  for i in range(len(centers)):
+    if math.dist(centers[i], backup[b_counter]) < DIFF_THRESHOLD:
+      b_counter = b_counter + 1
+
+  return b_counter < len(backup)
+  
+  
+def straighten_chessboard(frame, board_centers, backup, rotation):
+  corners = board_centers
+  keep_backup = False
+  if use_backup_corners(board_centers, backup):
+    corners = backup
+    keep_backup = True
+  print("BAckup?", keep_backup)
+
+  
   board_corner_1 = board_corner_2 = board_corner_3 = board_corner_4 = (0,0)
   straightened_corners = [(BORDER_SIZE,BORDER_SIZE), (BORDER_SIZE, BORDER_SIZE+BOARD_SIZE), (BORDER_SIZE+BOARD_SIZE, BORDER_SIZE+BOARD_SIZE), (BORDER_SIZE+BOARD_SIZE, BORDER_SIZE)]
 
-  if len(board_centers) == 4:
-    board_corner_1 = min(board_centers, key=(lambda x: math.dist((0,0), x)))
-    board_corner_2 = min(board_centers, key=(lambda x: math.dist((0,len(frame[0])), x)))
-    board_corner_3 = min(board_centers, key=(lambda x: math.dist((len(frame),len(frame[0])), x))  )
-    board_corner_4 = min(board_centers, key=(lambda x: math.dist((len(frame),0), x)))
+  if len(corners) == 4:
+    board_corner_1 = min(corners, key=(lambda x: math.dist((0,0), x)))
+    board_corner_2 = min(corners, key=(lambda x: math.dist((0,len(frame[0])), x)))
+    board_corner_3 = min(corners, key=(lambda x: math.dist((len(frame),len(frame[0])), x))  )
+    board_corner_4 = min(corners, key=(lambda x: math.dist((len(frame),0), x)))
     
     corners = [board_corner_1, board_corner_2, board_corner_3, board_corner_4]
 
@@ -61,10 +104,10 @@ def straighten_chessboard(frame, board_centers, rotation):
     if rotation:
       straightened_frame = cv2.rotate(straightened_frame, ROTATION_ORDER[rotation % 4])
 
-    return straightened_frame
+    return straightened_frame, keep_backup
 
   else:
-    return frame
+    return frame, keep_backup
 
 def piece_exterior(frame, hue):
   # ex. Hue = 175 and threshold = 10, should have 165 - 180, and 0 - 5 | 

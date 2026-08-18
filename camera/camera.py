@@ -1,9 +1,10 @@
 import cv2
+import json
 from camera.color_mask import color_mask, hue2brg
 from camera.white_balance import calc_white_balance, add_white_balance
 from camera.hue_picker_rad import calc_hue
 from camera.tracking import track, straighten_chessboard, track_piece_side, CELL_SIZE, BORDER_SIZE
-from chess.pieces.piece import PieceType
+from chess.pieces.piece import PieceType, Piece, PieceColor
 from chess.board.board_start_state import INIT_BOARD_STATE
 from chess.board.board_index import xy2tracking, notation2xy, coords2xy
 from PIL import Image
@@ -15,9 +16,23 @@ SELECTION_SIZE = 15
 SELECTION_THICKNESS = 2
 FRAME_X = 960
 FRAME_Y = 540
+ALPHA = 0.4
+pick = (0,0)
 
 def nothing(x):
     return()
+
+def wait_for_placement(expected_pieces: list[Piece], board:list[list[Piece]], frame):
+    valid = True
+    copy = frame.copy()
+    for p in expected_pieces:
+        x, y = p.position
+        if not board[x][y] or board[x][y].color != p.color or board[x][y].type != p.type:
+            valid = False
+        coord = xy2tracking((x,y))
+        cv2.rectangle(copy, coord, (coord[0]+CELL_SIZE, coord[1]+CELL_SIZE), (0,255,0) if valid else (0,0,255), cv2.FILLED)
+        cv2.addWeighted(copy, ALPHA, frame, 1-ALPHA, 0, frame)
+    return valid
 
 def run():
     vc = cv2.VideoCapture(0)
@@ -130,6 +145,7 @@ def run():
             "saturation": 100,
             "hue": 0,
             "centers": [],
+            "backup": [],
             "offset": 0,
             "pieces": [],
             "type": PieceType.NULL
@@ -139,8 +155,8 @@ def run():
             "color": (0, 0, 255),
             "x": 0,
             "y": 0,
-            "range": 3,
-            "brightness": 100,
+            "range": 5,
+            "brightness": 90,
             "saturation": 100,
             "hue": 0,
             "centers": [],
@@ -154,24 +170,24 @@ def run():
             "color": (0, 150, 255),
             "x": 0,
             "y": 0,
-            "range": 5,
-            "brightness": 100,
+            "range": 3,
+            "brightness": 180,
             "saturation": 100,
             "hue": 0,
-            "centers": [],
+            "centers": [], 
             "offset": 0,
             "start": 2,
             "pieces": [],
             "type": PieceType.QUEEN
         }, 
         {
-            "name": "Bishop",
+            "name": "Bishop", 
             "color": (0, 255, 255),
             "x": 0,
             "y": 0,
-            "range": 5,
-            "brightness": 100,
-            "saturation": 100,
+            "range": 5, 
+            "brightness": 50,
+            "saturation": 20,
             "hue": 0,
             "centers": [],
             "offset": 0,
@@ -186,7 +202,7 @@ def run():
             "y": 0,
             "range": 30,
             "brightness": 100,
-            "saturation": 100,
+            "saturation": 10,
             "hue": 0,
             "centers": [],
             "offset": 0,
@@ -196,12 +212,12 @@ def run():
         }, 
         {
             "name": "Rook",
-            "color": (255, 0, 0),
+            "color": (255, 100, 0),
             "x": 0,
             "y": 0,
-            "range": 10,
-            "brightness": 100,
-            "saturation": 100,
+            "range": 5,
+            "brightness": 65,
+            "saturation": 30,
             "hue": 0,
             "centers": [],
             "offset": 0,
@@ -214,9 +230,9 @@ def run():
             "color": (255, 0, 150),
             "x": 0,
             "y": 0,
-            "range": 20,
-            "brightness": 100,
-            "saturation": 100,
+            "range": 15,
+            "brightness": 45,
+            "saturation": 65,
             "hue": 0,
             "centers": [],
             "offset": 0,
@@ -234,6 +250,10 @@ def run():
         selection[selection_stage]["x"] = x
         selection[selection_stage]["y"] = y
 
+    def color_event(_event, x, y, _flags, _params):
+        global pick
+        pick = (y,x)
+
     last_stage = 0
 
     while rval:
@@ -241,6 +261,7 @@ def run():
         sample_frame = frame[zones[0]['xy'][1]:zones[1]['xy'][1], zones[0]['xy'][0]:zones[1]['xy'][0]]
         board_frame = frame[zones[2]['xy'][1]:zones[3]['xy'][1], zones[2]['xy'][0]:zones[3]['xy'][0]]
         board_frame_raw = board_frame.copy()
+        cv2.setMouseCallback('Board', color_event)
         
         sample_frame_x = int(abs(zones[0]['xy'][0]-zones[1]['xy'][0]))
         sample_frame_y = int(abs(zones[0]['xy'][1]-zones[1]['xy'][1]))
@@ -269,7 +290,10 @@ def run():
             sample_frame = add_white_balance(sample_frame, wb)
 
             if selection_stage > 1:
-                board_frame = straighten_chessboard(board_frame_raw, selection[1]["centers"], board_rotation)
+                board_frame, keep_backup = straighten_chessboard(board_frame_raw, selection[1]["centers"], selection[1]['backup'], board_rotation)
+                if not keep_backup:
+                    selection[1]['backup'] = selection[1]['centers']
+                
                 
             board_frame = add_white_balance(board_frame, wb)
             board_frame_clear = board_frame.copy()
@@ -280,9 +304,17 @@ def run():
             if selection_stage < 8:
                 selection[selection_stage]["range"] = cv2.getTrackbarPos('Range', "Adjustments")
                 selection[selection_stage]["offset"] = cv2.getTrackbarPos('Y-Offset', "Adjustments")
+                selection[selection_stage]["saturation"] = cv2.getTrackbarPos('Saturation', "Adjustments")
+                selection[selection_stage]["brightness"] = cv2.getTrackbarPos('Brightness', "Adjustments")
+
+                # if pick != (0,0):
+                #     img_pixel = board_frame_clear[pick[0]:pick[0]+1, pick[1]:pick[1]+1]
+                #     if img_pixel.any() and img_pixel[0].any():
+                #         img_pixel_hsv = cv2.cvtColor(img_pixel, cv2.COLOR_BGR2HSV)
+                #         print(f"{selection[selection_stage]["hue"]} | HSV: {img_pixel_hsv}")
             
                 mask_frame = color_mask(board_frame, selection[selection_stage]["hue"], selection[selection_stage]["range"], selection[selection_stage]["brightness"], selection[selection_stage]["saturation"])
-                # cv2.imshow("Mask", mask_frame)
+                cv2.imshow("Mask", mask_frame)
                 selection[selection_stage]["centers"] = track(mask_frame)
 
         cv2.setMouseCallback('Samples', sample_event)
@@ -309,14 +341,14 @@ def run():
                     cv2.rectangle(board_frame, (BORDER_SIZE+x*CELL_SIZE, BORDER_SIZE+y*CELL_SIZE), (BORDER_SIZE+(x+1)*CELL_SIZE, BORDER_SIZE+(y+1)*CELL_SIZE), (150, 0, 255), 1)
 
         if selection_stage == 8:
+            board = [[None] * 8]*8
             for i in range(1, 8):
-                
                 selection[i]["hue"] = calc_hue(sample_frame, selection[i]["x"], selection[i]["y"], SELECTION_SIZE, sample_frame_x, sample_frame_y, SELECTION_THICKNESS)
                 if i == 1:
                     board_frame_to_mask = board_frame_raw
                 else:
                     board_frame_to_mask = board_frame_clear
-                mask_frame = color_mask(board_frame_to_mask, selection[i]["hue"], selection[i]["range"])
+                mask_frame = color_mask(board_frame_to_mask, selection[i]["hue"], selection[i]["range"], selection[i]['brightness'], selection[i]['saturation'])
                 selection[i]["centers"] = track(mask_frame)
 
                 if i > 1:
@@ -327,7 +359,11 @@ def run():
                         if p["white"]:
                             piece_color = (255, 255, 255)
                         cv2.circle(board_frame, np.add(p["center"], (0,selection[i]["offset"])), 3, piece_color, 2)
+                        coordinates = coords2xy(np.add(p["center"], (0,selection[i]["offset"])))
+                        # board[coordinates[0]][coordinates[1]] = Piece(p["white"], selection[i]["type"], coordinates)
 
+            # if wait_for_placement(INIT_BOARD_STATE, board, board_frame):
+            #     selection_stage = 9
 
 
         cv2.imshow("Samples", sample_frame)
@@ -336,7 +372,8 @@ def run():
         key = cv2.waitKey(100) & 0xFF
 
         if key == ord(' '): # next on spacebar
-            selection_stage = selection_stage + 1
+            if selection_stage < 8: # disallow passage on waiting piece state
+                selection_stage = selection_stage + 1
             if selection_stage >= len(selection):
                 break
         if key == ord('b'): # b for back
