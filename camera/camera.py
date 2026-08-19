@@ -16,7 +16,7 @@ SELECTION_SIZE = 15
 SELECTION_THICKNESS = 2
 FRAME_X = 960
 FRAME_Y = 540
-ALPHA = 0.4
+ALPHA = 0.1
 pick = (0,0)
 
 def nothing(x):
@@ -131,6 +131,7 @@ def run():
             "saturation": 100,
             "hue": 0,
             "centers": [],
+            "backup": [],
             "offset": 0,
             "pieces": [],
             "type": PieceType.NULL
@@ -160,6 +161,7 @@ def run():
             "saturation": 100,
             "hue": 0,
             "centers": [],
+            "backup": [],
             "offset": 0,
             "start": 2,
             "pieces": [],
@@ -175,6 +177,7 @@ def run():
             "saturation": 100,
             "hue": 0,
             "centers": [], 
+            "backup": [],
             "offset": 0,
             "start": 2,
             "pieces": [],
@@ -190,6 +193,7 @@ def run():
             "saturation": 20,
             "hue": 0,
             "centers": [],
+            "backup": [],
             "offset": 0,
             "start": 4,
             "pieces": [],
@@ -205,6 +209,7 @@ def run():
             "saturation": 10,
             "hue": 0,
             "centers": [],
+            "backup": [],
             "offset": 0,
             "start": 4,
             "pieces": [],
@@ -220,6 +225,7 @@ def run():
             "saturation": 30,
             "hue": 0,
             "centers": [],
+            "backup": [],
             "offset": 0,
             "start": 4,
             "pieces": [],
@@ -235,6 +241,7 @@ def run():
             "saturation": 65,
             "hue": 0,
             "centers": [],
+            "backup": [],
             "offset": 0,
             "start": 16,
             "pieces": [],
@@ -352,7 +359,7 @@ def run():
                 selection[i]["centers"] = track(mask_frame)
 
                 if i > 1:
-                    selection[i]["pieces"] = track_piece_side(board_frame_clear, selection[i]["centers"], selection[i]["hue"], board_frame)
+                    selection[i]["pieces"], keep_backup = track_piece_side(board_frame_clear, selection[i]["centers"], selection[i]["hue"], board_frame)
                     for p in selection[i]["pieces"]:
                         cv2.circle(board_frame, np.add(p["center"], (0,selection[i]["offset"])), 5, selection[i]["color"], 3)
                         piece_color = (0, 0, 0)
@@ -360,10 +367,10 @@ def run():
                             piece_color = (255, 255, 255)
                         cv2.circle(board_frame, np.add(p["center"], (0,selection[i]["offset"])), 3, piece_color, 2)
                         coordinates = coords2xy(np.add(p["center"], (0,selection[i]["offset"])))
-                        # board[coordinates[0]][coordinates[1]] = Piece(p["white"], selection[i]["type"], coordinates)
+                        board[coordinates[0]][coordinates[1]] = Piece(p["white"], selection[i]["type"], coordinates)
 
-            # if wait_for_placement(INIT_BOARD_STATE, board, board_frame):
-            #     selection_stage = 9
+            if wait_for_placement(INIT_BOARD_STATE, board, board_frame):
+                selection_stage = 9
 
 
         cv2.imshow("Samples", sample_frame)

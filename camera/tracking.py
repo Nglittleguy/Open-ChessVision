@@ -42,8 +42,6 @@ def centers(contour_list):
 
   return tracked_list
       
-
-
 def track(frame):
   edge = edges(frame)
   contour_list = contours(edge)
@@ -55,19 +53,15 @@ def use_backup_corners(centers, backup):
   if len(backup) == 4:
     c_counter = 0 
     for i in range(4):
-      print("Distance: ", backup[i], centers[c_counter], math.dist(centers[c_counter], backup[i]))
       if math.dist(centers[c_counter], backup[i]) < DIFF_THRESHOLD:
         c_counter = c_counter + 1
-
-    print("Match count:", c_counter)
-    print("Center", centers)
-    print("Backup", backup)
     return c_counter >= 3 #if 3 corners match, then should be good to keep
   return False
+
   
 # Assuming sorted centers
 def use_backup_filter(centers, backup):
-  if len(centers) < len(backup):
+  if len(centers) < len(backup) or len(backup) == 0:
     return False
 
   b_counter = 0 
@@ -121,7 +115,13 @@ def piece_exterior(frame, hue):
         value_list.append(v)
 
   if len(value_list):
-    return np.mean(value_list)
+    # val = np.mean(value_list)
+
+    #find a value in the 66th percentile brightest pixel (avoid hotspots, glare, and shadows)
+    value_list.sort(reverse=True)
+    val = value_list[int(len(value_list)/3)] 
+    
+    return val 
   else: 
     return 255
 
