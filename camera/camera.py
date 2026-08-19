@@ -336,7 +336,6 @@ def run():
       
       cv2.putText(board_frame, "Count: " + str(len(selection[selection_stage]["centers"])), (BORDER_SIZE,BORDER_SIZE), cv2.FONT_HERSHEY_SIMPLEX, 1, hue2brg(selection[selection_stage]["hue"]), 1)
 
-      # cv2.imshow("Mask", mask_frame)
       for c in selection[selection_stage]["centers"]:
         cv2.circle(board_frame, np.add(c, (0,selection[selection_stage]["offset"])), 3, selection[selection_stage]["color"], 3)
         cv2.circle(board_frame, np.add(c, (0,selection[selection_stage]["offset"])), 5, (255, 255, 255), 2)

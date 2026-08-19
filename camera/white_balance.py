@@ -3,7 +3,11 @@ import cv2
 
 #Frame coming in is BRG numpy.ndarray
 
-def calc_white_balance(frame, wb_x, wb_y, selection_size, frame_x, frame_y, thickness):
+def calc_white_balance(frame, wb_x, wb_y, selection_size, thickness):
+    frame_x = len(frame)
+    frame_y = len(frame[0])
+    assert len(frame) and len(frame[0])
+
     assert wb_y > selection_size and wb_x > selection_size and wb_y < frame_y-selection_size and wb_x < frame_x-selection_size, f"ERROR: Outside camera bounds: x:{wb_x}, y:{wb_y}"
 
     wb_r = 0

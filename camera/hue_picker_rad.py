@@ -1,4 +1,5 @@
 import numpy as np
+from memory.selection import SELECTION_SIZE, SELECTION_THICKNESS
 import cv2
 
 RED_THRESHOLD = 10
@@ -16,10 +17,15 @@ def mean_hue(hue_list):
     return mean_hue
 
 
-def calc_hue(frame, x, y, selection_size, frame_x, frame_y, thickness):
-    if y > selection_size and x > selection_size and y < frame_y-selection_size and x < frame_x-selection_size:
+def calc_hue(frame, x, y):
+    # TODO : Check if x or y is frame or frame[0]
+    frame_x = len(frame)
+    frame_y = len(frame[0])
+    assert len(frame) and len(frame[0])
 
-        hue_roi = frame[y-selection_size-thickness:y+(selection_size-thickness), x-selection_size-thickness:x+(selection_size-thickness)]
+    if y > SELECTION_SIZE and x > SELECTION_SIZE and y < frame_y-SELECTION_SIZE and x < frame_x-SELECTION_SIZE:
+
+        hue_roi = frame[y-SELECTION_SIZE-SELECTION_THICKNESS:y+(SELECTION_SIZE-SELECTION_THICKNESS), x-SELECTION_SIZE-SELECTION_THICKNESS:x+(SELECTION_SIZE-SELECTION_THICKNESS)]
         if len(hue_roi) == 0 or len(hue_roi[0]) == 0 or len(hue_roi[0][0]) == 0:
             return 0
         
