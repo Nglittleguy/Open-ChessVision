@@ -1,7 +1,10 @@
 from chess.pieces.piece_enums import PieceType, PieceColor
+from chess.pieces.piece import Piece
+from chess.board.board_start_state import INIT_BOARD_STATE
 from chess.board.board import draw_board
+from chess.board.board_index import coords2xy, xy2tracking
 from camera.white_balance import calc_white_balance, add_white_balance
-from camera.tracking import straighten_chessboard, BORDER_SIZE
+from camera.tracking import straighten_chessboard, BORDER_SIZE, CELL_SIZE
 from camera.color_mask import hue2brg
 from memory.zones import zones
 import time
@@ -17,12 +20,16 @@ SELECTION_SIZE = 15
 SELECTION_THICKNESS = 2
 WB_CHECK_PERIOD = 5 #seconds
 SAMPLE_TEXT_OFFSET = 30
+ALPHA = 0.1
 
 wb = (0,0,0)
 board_rotation = 0
 selection_stage = 0
 last_stage = 0
 last_time = 0
+
+board = [[None] * 8]*8
+# board = [[None * 8],[None * 8],[None * 8],[None * 8],[None * 8],[None * 8],[None * 8],[None * 8]]
 
 '''
 0: White
@@ -201,10 +208,10 @@ def callibrate_frame(sample_frame, board_frame):
 
 # Draw Hue Picker Squares On Sample Frame
 def draw_hue_picker(frame):
-  for s in range(selection_stage + 1):
+  for s in range(min(selection_stage + 1, len(selection))):
     cv2.rectangle(frame, (selection[s]["x"]-SELECTION_SIZE, selection[s]["y"]-SELECTION_SIZE), (selection[s]["x"]+SELECTION_SIZE, selection[s]["y"]+SELECTION_SIZE), selection[s]["color"], SELECTION_THICKNESS) 
     cv2.putText(frame, selection[s]["name"], (selection[s]["x"]-SAMPLE_TEXT_OFFSET, selection[s]["y"]-SAMPLE_TEXT_OFFSET), cv2.FONT_HERSHEY_SIMPLEX, 1, selection[s]["color"], 1)
-
+  return 
 
 # Draw Selection on Board Frame
 def draw_selection(frame):
@@ -217,4 +224,32 @@ def draw_selection(frame):
   # Draw board cells if the corners are already found
   if selection_stage > 1:
     draw_board(frame)
-  
+
+  return
+
+# Takes all pieces of a certain selection, and puts them on the board memory
+def put_selection_on_board(frame, i):
+  s = selection[i]
+  for p in s["pieces"]:
+    center = np.add(p["center"], (0, s["offset"]))
+
+    cv2.circle(frame, center, 7, s["color"], 3)
+    piece_side = (255, 255, 255) if p["white"] else (0,0,0)
+
+    cv2.circle(frame, center, 10, piece_side, 3)
+    coordinates = coords2xy(center)
+    board[coordinates[0]][coordinates[1]] = Piece(p["white"], s["type"], coordinates)
+
+  return
+
+def wait_for_placement(frame):
+  valid = True
+  copy = frame.copy()
+  for p in INIT_BOARD_STATE:
+    x, y = p.position
+    if not board[x][y] or board[x][y].color != p.color or board[x][y].type != p.type:
+      valid = False
+    coord = xy2tracking((x,y))
+    cv2.rectangle(copy, coord, (coord[0]+CELL_SIZE, coord[1]+CELL_SIZE), (0,255,0) if valid else (0,0,255), cv2.FILLED)
+    cv2.addWeighted(copy, ALPHA, frame, 1-ALPHA, 0, frame)
+  return valid

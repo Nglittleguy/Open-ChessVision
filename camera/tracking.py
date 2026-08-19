@@ -69,7 +69,7 @@ def use_backup_filter(centers, backup):
     if math.dist(centers[i], backup[b_counter]) < DIFF_THRESHOLD:
       b_counter = b_counter + 1
 
-  return b_counter < len(backup)
+  return b_counter == len(backup)
   
   
 def straighten_chessboard(frame, board_centers, backup, rotation):
@@ -78,7 +78,6 @@ def straighten_chessboard(frame, board_centers, backup, rotation):
   if use_backup_corners(board_centers, backup):
     corners = backup
     keep_backup = True
-  print("BAckup?", keep_backup)
 
   
   board_corner_1 = board_corner_2 = board_corner_3 = board_corner_4 = (0,0)
@@ -143,11 +142,18 @@ def split_threshold(val_list):
   return int((val_list[gap_i] + val_list[gap_i-1])/2)
   
 
-def track_piece_side(read_frame, centers, hue, draw_frame):
+def track_piece_side(read_frame, centers, backup, hue, draw_frame):
   # exterior_list = []
+
+  piece_centers = centers
+  keep_backup = False
+  if use_backup_filter(centers, backup):
+    piece_centers = backup
+    keep_backup = True
+    
   piece_info = []
 
-  for c in centers:
+  for c in piece_centers:
     piece_frame = read_frame[c[1]-TRACKING_PIECE_FRAME:c[1]+TRACKING_PIECE_FRAME, c[0]-TRACKING_PIECE_FRAME:c[0]+TRACKING_PIECE_FRAME]
     if len(piece_frame) and len(piece_frame[0]):
       piece_roi = cv2.cvtColor(piece_frame, cv2.COLOR_BGR2HSV)
@@ -164,4 +170,4 @@ def track_piece_side(read_frame, centers, hue, draw_frame):
       p["white"] = True
     else:
       p["white"] = False
-  return piece_info
+  return piece_info, keep_backup

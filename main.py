@@ -1,6 +1,6 @@
 import cv2
-from memory.zones import zones, zone_stage, zone_event
-from memory.selection import wb, board_rotation, selection, selection_stage, last_stage, sample_event, nothing, callibrate_frame, SELECTION_THICKNESS, draw_hue_picker
+from memory.zones import zones, zone_event
+from memory.selection import selection, selection_stage, sample_event, nothing, callibrate_frame, SELECTION_THICKNESS, draw_hue_picker, put_selection_on_board, wait_for_placement
 from camera.color_mask import color_mask, hue2brg
 from camera.white_balance import calc_white_balance, add_white_balance
 from camera.hue_picker_rad import calc_hue
@@ -53,6 +53,7 @@ def step_1(vc):
 # Step 2: 
 def step_2(vc):
   success = True
+  cv2.namedWindow("Adjustments")
 
   while success and selection_stage < len(selection):
     # cv2.setMouseCallback('Board', color_event)
@@ -110,7 +111,59 @@ def step_2(vc):
     if key == ord('>'): # > for rotate CCW
       board_rotation = (board_rotation + 1) % 4
 
+  # Clear un-needed windows
+  cv2.destroyWindow("Mask")
+  cv2.destroyWindow("Blur")
+  cv2.destroyWindow("Adjustments")
   return
+
+def step_3(vc):
+  success = True
+
+  while success:
+    success, frame = vc.read()
+    update_sample = False
+
+    success, frame = vc.read()
+    sample_frame = frame[zones[0]['xy'][1]:zones[1]['xy'][1], zones[0]['xy'][0]:zones[1]['xy'][0]]
+    board_frame = frame[zones[2]['xy'][1]:zones[3]['xy'][1], zones[2]['xy'][0]:zones[3]['xy'][0]]
+
+    # Maintain callibration, updating periodically
+    sample_frame, board_frame, update_sample = callibrate_frame(sample_frame, board_frame)
+    board_frame_clear = board_frame.copy()
+
+    draw_hue_picker(sample_frame)
+
+    for s in range(1,8):
+      # Periodically update sample hue
+      if update_sample:
+        selection[selection_stage]["hue"] = calc_hue(sample_frame, selection[selection_stage]["x"], selection[selection_stage]["y"])
+
+      # If getting board corners
+      board_frame_to_mask = board_frame if s == i else board_frame_clear
+      mask_frame = color_mask(board_frame_to_mask, selection[s]["hue"], selection[s]["range"], selection[s]['brightness'], selection[s]['saturation'])
+      selection[s]["centers"] = track(mask_frame)
+
+      # Piece Type
+      if s > 1:
+        selection[s]["pieces"], keep_backup = track_piece_side(board_frame_clear, selection[s]["centers"], selection[s]["backup"], selection[s]["hue"], board_frame)
+
+        # If nothing has changed, prevent jittering
+        if not keep_backup:
+          selection[s]["backup"] = selection[s]["centers"]
+
+        # Place pieces on the board
+        put_selection_on_board(board_frame, s)
+
+    # Wait to check required placement before beginning
+    if wait_for_placement(board_frame):
+      break;
+    
+    cv2.imshow("Samples", sample_frame)
+    cv2.imshow("Board", board_frame)
+
+      
+  return  
 
 def main():
   vc = cv2.VideoCapture(0)
