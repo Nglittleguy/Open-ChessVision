@@ -172,14 +172,15 @@ selection = [
 ]
 
 def sample_event(_event, x, y, _flags, _params):
-  selection[selection_stage]["x"] = x
-  selection[selection_stage]["y"] = y
+  if selection_stage >= 0 and selection_stage < 8:
+    selection[selection_stage]["x"] = x
+    selection[selection_stage]["y"] = y
 
 def nothing(x):
   return()
 
 # Add White Balance, and Straighten Board
-def callibrate_frame(sample_frame, board_frame):
+def callibrate_frame(sample_frame, board_frame, step):
   global last_time
   curr_time = time.time()
   update = curr_time - last_stage > WB_CHECK_PERIOD
@@ -192,17 +193,22 @@ def callibrate_frame(sample_frame, board_frame):
     last_time = curr_time
     wb = calc_white_balance(sample_frame, selection[0]["x"], selection[0]["y"], SELECTION_SIZE, SELECTION_THICKNESS)
     assert len(wb) == 3
-    sample_frame = add_white_balance(sample_frame, wb)
+
+  sample_frame = add_white_balance(sample_frame, wb)
+
+  # Copy the unstraightened board (with wb) for corners
+  board_frame_uncropped = board_frame.copy()
 
   # Update if board corners are found
   if selection_stage > 1:
     board_frame, keep_backup = straighten_chessboard(board_frame, selection[1]["centers"], selection[1]['backup'], board_rotation)
-    if not keep_backup:
+    if not keep_backup and len(selection[1]['centers']) == 4:
       selection[1]['backup'] = selection[1]['centers']
 
   board_frame = add_white_balance(board_frame, wb)
+  board_frame_uncropped = add_white_balance(board_frame_uncropped, wb)
 
-  return sample_frame, board_frame, update
+  return sample_frame, board_frame, board_frame_uncropped, update
 
 
 # Draw Hue Picker Squares On Sample Frame
@@ -237,9 +243,10 @@ def put_selection_on_board(frame, i):
 
     cv2.circle(frame, center, 10, piece_side, 3)
     coordinates = coords2xy(center)
-    board[coordinates[0]][coordinates[1]] = Piece(p["white"], s["type"], coordinates)
 
-  return
+    if coordinates:
+      board[coordinates[0]][coordinates[1]] = Piece(p["white"], s["type"], coordinates)
+  return frame
 
 def wait_for_placement(frame):
   valid = True
@@ -251,4 +258,4 @@ def wait_for_placement(frame):
     coord = xy2tracking((x,y))
     cv2.rectangle(copy, coord, (coord[0]+CELL_SIZE, coord[1]+CELL_SIZE), (0,255,0) if valid else (0,0,255), cv2.FILLED)
     cv2.addWeighted(copy, ALPHA, frame, 1-ALPHA, 0, frame)
-  return valid
+  return frame, valid

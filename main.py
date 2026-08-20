@@ -1,15 +1,9 @@
 import cv2
 import memory.zones as z
 import memory.selection as m 
-from camera.color_mask import color_mask, hue2brg
-from camera.white_balance import calc_white_balance, add_white_balance
+from camera.color_mask import color_mask
 from camera.hue_picker_rad import calc_hue
-from camera.tracking import track, straighten_chessboard, track_piece_side, CELL_SIZE, BORDER_SIZE
-from chess.pieces.piece import PieceType, Piece, PieceColor
-from chess.board.board_start_state import INIT_BOARD_STATE
-from chess.board.board_index import xy2tracking, notation2xy, coords2xy
-import numpy as np
-import time
+from camera.tracking import track, track_piece_side
 
 FRAME_X = 960
 FRAME_Y = 540
@@ -79,7 +73,7 @@ def step_2(vc):
     # Need to callibrate (White Balance, and Board Isolation)
     if m.selection_stage > 0: # Stages 1-7
       s = m.selection[m.selection_stage]
-      sample_frame, board_frame, _update_sample = m.callibrate_frame(sample_frame, board_frame)
+      sample_frame, board_frame, _board_frame_wb, _update_sample = m.callibrate_frame(sample_frame, board_frame, 2)
       
       # Retrieve hue of sample
       if s["x"] != 0 and s["y"] != 0:
@@ -91,7 +85,7 @@ def step_2(vc):
       s["brightness"] = cv2.getTrackbarPos('Brightness', "Adjustments")
 
       # Retrieve colour mask using parameters for this Stage
-      
+
       mask_frame = color_mask(board_frame, s["hue"], s["range"], s["brightness"], s["saturation"])
       s["centers"] = track(mask_frame)
       cv2.imshow("Mask", mask_frame)
@@ -126,15 +120,13 @@ def step_3(vc):
   success = True
 
   while success:
-    success, frame = vc.read()
-    update_sample = False
 
     success, frame = vc.read()
     sample_frame = frame[z.zones[0]['xy'][1]:z.zones[1]['xy'][1], z.zones[0]['xy'][0]:z.zones[1]['xy'][0]]
     board_frame = frame[z.zones[2]['xy'][1]:z.zones[3]['xy'][1], z.zones[2]['xy'][0]:z.zones[3]['xy'][0]]
 
     # Maintain callibration, updating periodically
-    sample_frame, board_frame, update_sample = m.callibrate_frame(sample_frame, board_frame)
+    sample_frame, board_frame, board_frame_wb, update_sample = m.callibrate_frame(sample_frame, board_frame, 3)
     board_frame_clear = board_frame.copy()
 
     sample_frame = m.draw_hue_picker(sample_frame)
@@ -146,7 +138,7 @@ def step_3(vc):
         s["hue"] = calc_hue(sample_frame, s["x"], s["y"])
 
       # If getting board corners
-      board_frame_to_mask = board_frame if stage == 1 else board_frame_clear
+      board_frame_to_mask = board_frame_wb if stage == 1 else board_frame
       mask_frame = color_mask(board_frame_to_mask, s["hue"], s["range"], s['brightness'], s['saturation'])
       s["centers"] = track(mask_frame)
 
@@ -159,15 +151,17 @@ def step_3(vc):
           s["backup"] = s["centers"]
 
         # Place pieces on the board
-        m.put_selection_on_board(board_frame, stage)
+        board_frame = m.put_selection_on_board(board_frame, stage)
 
     # Wait to check required placement before beginning
-    if m.wait_for_placement(board_frame):
+    # board_frame, valid_placement = m.wait_for_placement(board_frame)
+    valid_placement = False
+    if valid_placement:
       break;
     
     cv2.imshow("Samples", sample_frame)
     cv2.imshow("Board", board_frame)
-
+    cv2.waitKey(100)
       
   return  
 

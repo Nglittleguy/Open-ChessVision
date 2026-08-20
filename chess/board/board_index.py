@@ -2,6 +2,8 @@ from chess.board.board import Board
 from camera.tracking import BOARD_SIZE, BORDER_SIZE, CELL_SIZE
 import numpy as np
 
+BOARD_THRESHOLD = 20
+
 def notation2xy(notation: str):
   col = notation[0]
   row = int(notation[1])
@@ -30,11 +32,11 @@ def xy2tracking(xy: tuple[int, int]):
   return top_left
 
 def coords2xy(coords: tuple[int, int]):
-  if coords[0] < BORDER_SIZE or coords[0] > BORDER_SIZE + BOARD_SIZE or coords[1] < BORDER_SIZE or coords[1] > BORDER_SIZE + BOARD_SIZE:
+  if coords[0] < BORDER_SIZE - BOARD_THRESHOLD  or coords[0] > BORDER_SIZE + BOARD_SIZE + BOARD_THRESHOLD or coords[1] < BORDER_SIZE - BOARD_THRESHOLD or coords[1] > BORDER_SIZE + BOARD_SIZE + BOARD_THRESHOLD:
     return None
 
-  col = int((coords[0] - BORDER_SIZE)/CELL_SIZE)
-  row = int((BOARD_SIZE - (coords[1] - BORDER_SIZE))/CELL_SIZE)
+  col = min(max(int((coords[0] - BORDER_SIZE)/CELL_SIZE),0),7)
+  row = min(max(int((BOARD_SIZE - (coords[1] - BORDER_SIZE))/CELL_SIZE),0),7)
   return (col, row)
 
 

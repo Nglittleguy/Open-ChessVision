@@ -36,7 +36,7 @@ def centers(contour_list):
       tracked_list.append((cx,cy))
 
   def sort_coords(coord):
-    return (coord[0] + coord[1] * BORDER_SIZE)
+    return (coord[0] * coord[0] + coord[1] * coord[1])
 
   tracked_list.sort(key=sort_coords)
 
@@ -50,18 +50,21 @@ def track(frame):
 
 # Assuming sorted centers
 def use_backup_corners(centers, backup):
-  if len(backup) == 4:
-    c_counter = 0 
-    for i in range(4):
-      if math.dist(centers[c_counter], backup[i]) < DIFF_THRESHOLD:
-        c_counter = c_counter + 1
-    return c_counter >= 3 #if 3 corners match, then should be good to keep
-  return False
+  if len(backup) != 4:
+    return False
+  
+  c_counter = 0 
+  for i in range(4):
+    if c_counter >= len(centers):
+      break
+    if math.dist(centers[c_counter], backup[i]) < DIFF_THRESHOLD:
+      c_counter = c_counter + 1
+  return c_counter >= 3 # if 3 corners match, then should be good to keep
 
   
 # Assuming sorted centers
 def use_backup_filter(centers, backup):
-  if len(centers) < len(backup) or len(backup) == 0:
+  if len(centers) != len(backup) or len(backup) == 0:
     return False
 
   b_counter = 0 
@@ -79,7 +82,6 @@ def straighten_chessboard(frame, board_centers, backup, rotation):
     corners = backup
     keep_backup = True
 
-  
   board_corner_1 = board_corner_2 = board_corner_3 = board_corner_4 = (0,0)
   straightened_corners = [(BORDER_SIZE,BORDER_SIZE), (BORDER_SIZE, BORDER_SIZE+BOARD_SIZE), (BORDER_SIZE+BOARD_SIZE, BORDER_SIZE+BOARD_SIZE), (BORDER_SIZE+BOARD_SIZE, BORDER_SIZE)]
 
