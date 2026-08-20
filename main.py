@@ -96,7 +96,8 @@ def step_2(vc):
       s["centers"] = track(mask_frame)
       cv2.imshow("Mask", mask_frame)
 
-    m.draw_hue_picker(sample_frame)
+    sample_frame = m.draw_hue_picker(sample_frame)
+    board_frame = m.draw_selection(board_frame)
 
     cv2.imshow("Samples", sample_frame)
     cv2.imshow("Board", board_frame)
@@ -136,28 +137,29 @@ def step_3(vc):
     sample_frame, board_frame, update_sample = m.callibrate_frame(sample_frame, board_frame)
     board_frame_clear = board_frame.copy()
 
-    m.draw_hue_picker(sample_frame)
+    sample_frame = m.draw_hue_picker(sample_frame)
 
-    for s in range(1,8):
+    for stage in range(1,8):
+      s = m.selection[stage]
       # Periodically update sample hue
       if update_sample:
-        m.selection[m.selection_stage]["hue"] = calc_hue(sample_frame, m.selection[m.selection_stage]["x"], m.selection[m.selection_stage]["y"])
+        s["hue"] = calc_hue(sample_frame, s["x"], s["y"])
 
       # If getting board corners
-      board_frame_to_mask = board_frame if s == i else board_frame_clear
-      mask_frame = color_mask(board_frame_to_mask, m.selection[s]["hue"], m.selection[s]["range"], m.selection[s]['brightness'], m.selection[s]['saturation'])
-      m.selection[s]["centers"] = track(mask_frame)
+      board_frame_to_mask = board_frame if stage == 1 else board_frame_clear
+      mask_frame = color_mask(board_frame_to_mask, s["hue"], s["range"], s['brightness'], s['saturation'])
+      s["centers"] = track(mask_frame)
 
       # Piece Type
-      if s > 1:
-        m.selection[s]["pieces"], keep_backup = track_piece_side(board_frame_clear, m.selection[s]["centers"], m.selection[s]["backup"], m.selection[s]["hue"], board_frame)
+      if stage > 1:
+        s["pieces"], keep_backup = track_piece_side(board_frame_clear, s["centers"], s["backup"], s["hue"], board_frame)
 
         # If nothing has changed, prevent jittering
         if not keep_backup:
-          m.selection[s]["backup"] = m.selection[s]["centers"]
+          s["backup"] = s["centers"]
 
         # Place pieces on the board
-        m.put_selection_on_board(board_frame, s)
+        m.put_selection_on_board(board_frame, stage)
 
     # Wait to check required placement before beginning
     if m.wait_for_placement(board_frame):
@@ -182,6 +184,7 @@ def main():
 
   step_1(vc)
   step_2(vc)
+  step_3(vc)
   
 
 if __name__=="__main__":

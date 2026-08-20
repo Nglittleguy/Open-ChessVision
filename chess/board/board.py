@@ -29,3 +29,4 @@ def draw_board(frame):
   for x in range(8):
     for y in range(8):
       cv2.rectangle(frame, (BORDER_SIZE+x*CELL_SIZE, BORDER_SIZE+y*CELL_SIZE), (BORDER_SIZE+(x+1)*CELL_SIZE, BORDER_SIZE+(y+1)*CELL_SIZE), (150, 0, 255), 1)
+  return frame

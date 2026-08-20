@@ -210,7 +210,7 @@ def draw_hue_picker(frame):
   for s in range(min(selection_stage + 1, len(selection))):
     cv2.rectangle(frame, (selection[s]["x"]-SELECTION_SIZE, selection[s]["y"]-SELECTION_SIZE), (selection[s]["x"]+SELECTION_SIZE, selection[s]["y"]+SELECTION_SIZE), selection[s]["color"], SELECTION_THICKNESS) 
     cv2.putText(frame, selection[s]["name"], (selection[s]["x"]-SAMPLE_TEXT_OFFSET, selection[s]["y"]-SAMPLE_TEXT_OFFSET), cv2.FONT_HERSHEY_SIMPLEX, 1, selection[s]["color"], 1)
-  return 
+  return frame
 
 # Draw Selection on Board Frame
 def draw_selection(frame):
@@ -222,9 +222,9 @@ def draw_selection(frame):
 
   # Draw board cells if the corners are already found
   if selection_stage > 1:
-    draw_board(frame)
+    frame = draw_board(frame)
 
-  return
+  return frame
 
 # Takes all pieces of a certain selection, and puts them on the board memory
 def put_selection_on_board(frame, i):
