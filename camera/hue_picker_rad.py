@@ -18,9 +18,8 @@ def mean_hue(hue_list):
 
 
 def calc_hue(frame, x, y):
-    # TODO : Check if x or y is frame or frame[0]
-    frame_x = len(frame)
-    frame_y = len(frame[0])
+    frame_x = len(frame[0])
+    frame_y = len(frame)
     assert len(frame) and len(frame[0])
 
     if y > SELECTION_SIZE and x > SELECTION_SIZE and y < frame_y-SELECTION_SIZE and x < frame_x-SELECTION_SIZE:

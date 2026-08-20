@@ -1,6 +1,6 @@
 import cv2
-from memory.zones import zones, zone_event
-from memory.selection import selection, selection_stage, sample_event, nothing, callibrate_frame, SELECTION_THICKNESS, draw_hue_picker, put_selection_on_board, wait_for_placement
+import memory.zones as z
+import memory.selection as m 
 from camera.color_mask import color_mask, hue2brg
 from camera.white_balance import calc_white_balance, add_white_balance
 from camera.hue_picker_rad import calc_hue
@@ -21,79 +21,82 @@ def step_1(vc):
   success = True
 
   while success:
-    cv2.setMouseCallback('Zones', zone_event)
+    cv2.setMouseCallback('Zones', z.zone_event)
     success, zone_frame = vc.read()
-    for stage in range(zone_stage + 1):
-      if stage % 2 == 1 and zones[stage]["xy"] != (0,0):
-        cv2.rectangle(zone_frame, zones[stage-1]["xy"], zones[stage]["xy"], (255, 0, 0), SELECTION_THICKNESS) 
-      cv2.putText(zone_frame, zones[stage]["name"], (zones[stage]["xy"][0]-40, zones[stage]["xy"][1]-20), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 1)
+    for stage in range(z.zone_stage + 1):
+      if stage % 2 == 1 and z.zones[stage]["xy"] != (0,0):
+        cv2.rectangle(zone_frame, z.zones[stage-1]["xy"], z.zones[stage]["xy"], (255, 0, 0), m.SELECTION_THICKNESS) 
+      cv2.putText(zone_frame, z.zones[stage]["name"], (z.zones[stage]["xy"][0]-40, z.zones[stage]["xy"][1]-20), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 1)
 
     cv2.imshow("Zones", zone_frame)
 
     key = cv2.waitKey(10) & 0xFF
 
     if key == ord(' '): # next on spacebar
-      zone_stage = zone_stage + 1
-      if zone_stage >= len(zones):
+      z.zone_stage = z.zone_stage + 1
+      if z.zone_stage >= len(z.zones):
         break
   cv2.destroyAllWindows()
 
-  callibration_x_list = [zones[0]['xy'][0], zones[1]['xy'][0]]
-  callibration_y_list = [zones[0]['xy'][1], zones[1]['xy'][1]]
-  board_x_list = [zones[2]['xy'][0], zones[3]['xy'][0]]
-  board_y_list = [zones[2]['xy'][1], zones[3]['xy'][1]]
+  callibration_x_list = [z.zones[0]['xy'][0], z.zones[1]['xy'][0]]
+  callibration_y_list = [z.zones[0]['xy'][1], z.zones[1]['xy'][1]]
+  board_x_list = [z.zones[2]['xy'][0], z.zones[3]['xy'][0]]
+  board_y_list = [z.zones[2]['xy'][1], z.zones[3]['xy'][1]]
 
-  zones[0]['xy'] = (min(callibration_x_list), min(callibration_y_list))
-  zones[1]['xy'] = (max(callibration_x_list), max(callibration_y_list))
-  zones[2]['xy'] = (min(board_x_list), min(board_y_list))
-  zones[3]['xy'] = (max(board_x_list), max(board_y_list))
+  z.zones[0]['xy'] = (min(callibration_x_list), min(callibration_y_list))
+  z.zones[1]['xy'] = (max(callibration_x_list), max(callibration_y_list))
+  z.zones[2]['xy'] = (min(board_x_list), min(board_y_list))
+  z.zones[3]['xy'] = (max(board_x_list), max(board_y_list))
   return
 
 
-# Step 2: 
+# Step 2: Selecting Callibration for Pieces
 def step_2(vc):
+  
   success = True
   cv2.namedWindow("Adjustments")
 
-  while success and selection_stage < len(selection):
+  while success and m.selection_stage < len(m.selection):
     # cv2.setMouseCallback('Board', color_event)
-    cv2.setMouseCallback('Samples', sample_event)
-    update_sample = False
+    cv2.setMouseCallback('Samples', m.sample_event)
+    # update_sample = False
 
     success, frame = vc.read()
-    sample_frame = frame[zones[0]['xy'][1]:zones[1]['xy'][1], zones[0]['xy'][0]:zones[1]['xy'][0]]
-    board_frame = frame[zones[2]['xy'][1]:zones[3]['xy'][1], zones[2]['xy'][0]:zones[3]['xy'][0]]
+    sample_frame = frame[z.zones[0]['xy'][1]:z.zones[1]['xy'][1], z.zones[0]['xy'][0]:z.zones[1]['xy'][0]]
+    board_frame = frame[z.zones[2]['xy'][1]:z.zones[3]['xy'][1], z.zones[2]['xy'][0]:z.zones[3]['xy'][0]]
 
     # Update when stage changes
-    if selection_stage > last_stage or last_stage > selection_stage:
-      last_stage = selection_stage
+    if m.selection_stage > m.last_stage or m.last_stage > m.selection_stage:
+      m.last_stage = m.selection_stage
 
       # When retrieving selection for pieces
-      if selection_stage > 1 and selection_stage < 8:
-        cv2.createTrackbar('Range', 'Adjustments', selection[selection_stage]['range'], 50, nothing)
-        cv2.createTrackbar('Brightness', 'Adjustments', selection[selection_stage]['brightness'], 255, nothing)
-        cv2.createTrackbar('Saturation', 'Adjustments', selection[selection_stage]['saturation'], 255, nothing)
-        cv2.createTrackbar('Y-Offset', 'Adjustments', selection[selection_stage]['offset'], 150, nothing)
+      if m.selection_stage > 0 and m.selection_stage < 8:
+        cv2.createTrackbar('Range', 'Adjustments', m.selection[m.selection_stage]['range'], 50, m.nothing)
+        cv2.createTrackbar('Brightness', 'Adjustments', m.selection[m.selection_stage]['brightness'], 255, m.nothing)
+        cv2.createTrackbar('Saturation', 'Adjustments', m.selection[m.selection_stage]['saturation'], 255, m.nothing)
+        cv2.createTrackbar('Y-Offset', 'Adjustments', m.selection[m.selection_stage]['offset'], 150, m.nothing)
 
     # Need to callibrate (White Balance, and Board Isolation)
-    if selection_stage > 0: # Stages 1-7
-      sample_frame, board_frame, update_sample = callibrate_frame(sample_frame, board_frame)
-
+    if m.selection_stage > 0: # Stages 1-7
+      s = m.selection[m.selection_stage]
+      sample_frame, board_frame, _update_sample = m.callibrate_frame(sample_frame, board_frame)
+      
       # Retrieve hue of sample
-      if update_sample and selection[selection_stage]["x"] != 0 and selection[selection_stage]["y"] != 0:
-        selection[selection_stage]["hue"] = calc_hue(sample_frame, selection[selection_stage]["x"], selection[selection_stage]["y"])
+      if s["x"] != 0 and s["y"] != 0:
+        s["hue"] = calc_hue(sample_frame, s["x"], s["y"])
 
-      selection[selection_stage]["range"] = cv2.getTrackbarPos('Range', "Adjustments")
-      selection[selection_stage]["offset"] = cv2.getTrackbarPos('Y-Offset', "Adjustments")
-      selection[selection_stage]["saturation"] = cv2.getTrackbarPos('Saturation', "Adjustments")
-      selection[selection_stage]["brightness"] = cv2.getTrackbarPos('Brightness', "Adjustments")
+      s["range"] = cv2.getTrackbarPos('Range', "Adjustments")
+      s["offset"] = cv2.getTrackbarPos('Y-Offset', "Adjustments")
+      s["saturation"] = cv2.getTrackbarPos('Saturation', "Adjustments")
+      s["brightness"] = cv2.getTrackbarPos('Brightness', "Adjustments")
 
       # Retrieve colour mask using parameters for this Stage
-      mask_frame = color_mask(board_frame, selection[selection_stage]["hue"], selection[selection_stage]["range"], selection[selection_stage]["brightness"], selection[selection_stage]["saturation"])
-      selection[selection_stage]["centers"] = track(mask_frame)
+      
+      mask_frame = color_mask(board_frame, s["hue"], s["range"], s["brightness"], s["saturation"])
+      s["centers"] = track(mask_frame)
       cv2.imshow("Mask", mask_frame)
 
-    draw_hue_picker(sample_frame)
+    m.draw_hue_picker(sample_frame)
 
     cv2.imshow("Samples", sample_frame)
     cv2.imshow("Board", board_frame)
@@ -102,10 +105,10 @@ def step_2(vc):
     key = cv2.waitKey(100) & 0xFF
 
     if key == ord(' '): # next on spacebar
-      selection_stage = selection_stage + 1
+      m.selection_stage = m.selection_stage + 1
     if key == ord('b'): # b for back
-      if selection_stage != 0:
-        selection_stage = selection_stage - 1
+      if m.selection_stage != 0:
+        m.selection_stage = m.selection_stage - 1
     if key == ord('<'): # < for rotate CCW
       board_rotation = (board_rotation + 3) % 4
     if key == ord('>'): # > for rotate CCW
@@ -117,6 +120,7 @@ def step_2(vc):
   cv2.destroyWindow("Adjustments")
   return
 
+# Step 3: Waiting for Proper Piece Placement
 def step_3(vc):
   success = True
 
@@ -125,38 +129,38 @@ def step_3(vc):
     update_sample = False
 
     success, frame = vc.read()
-    sample_frame = frame[zones[0]['xy'][1]:zones[1]['xy'][1], zones[0]['xy'][0]:zones[1]['xy'][0]]
-    board_frame = frame[zones[2]['xy'][1]:zones[3]['xy'][1], zones[2]['xy'][0]:zones[3]['xy'][0]]
+    sample_frame = frame[z.zones[0]['xy'][1]:z.zones[1]['xy'][1], z.zones[0]['xy'][0]:z.zones[1]['xy'][0]]
+    board_frame = frame[z.zones[2]['xy'][1]:z.zones[3]['xy'][1], z.zones[2]['xy'][0]:z.zones[3]['xy'][0]]
 
     # Maintain callibration, updating periodically
-    sample_frame, board_frame, update_sample = callibrate_frame(sample_frame, board_frame)
+    sample_frame, board_frame, update_sample = m.callibrate_frame(sample_frame, board_frame)
     board_frame_clear = board_frame.copy()
 
-    draw_hue_picker(sample_frame)
+    m.draw_hue_picker(sample_frame)
 
     for s in range(1,8):
       # Periodically update sample hue
       if update_sample:
-        selection[selection_stage]["hue"] = calc_hue(sample_frame, selection[selection_stage]["x"], selection[selection_stage]["y"])
+        m.selection[m.selection_stage]["hue"] = calc_hue(sample_frame, m.selection[m.selection_stage]["x"], m.selection[m.selection_stage]["y"])
 
       # If getting board corners
       board_frame_to_mask = board_frame if s == i else board_frame_clear
-      mask_frame = color_mask(board_frame_to_mask, selection[s]["hue"], selection[s]["range"], selection[s]['brightness'], selection[s]['saturation'])
-      selection[s]["centers"] = track(mask_frame)
+      mask_frame = color_mask(board_frame_to_mask, m.selection[s]["hue"], m.selection[s]["range"], m.selection[s]['brightness'], m.selection[s]['saturation'])
+      m.selection[s]["centers"] = track(mask_frame)
 
       # Piece Type
       if s > 1:
-        selection[s]["pieces"], keep_backup = track_piece_side(board_frame_clear, selection[s]["centers"], selection[s]["backup"], selection[s]["hue"], board_frame)
+        m.selection[s]["pieces"], keep_backup = track_piece_side(board_frame_clear, m.selection[s]["centers"], m.selection[s]["backup"], m.selection[s]["hue"], board_frame)
 
         # If nothing has changed, prevent jittering
         if not keep_backup:
-          selection[s]["backup"] = selection[s]["centers"]
+          m.selection[s]["backup"] = m.selection[s]["centers"]
 
         # Place pieces on the board
-        put_selection_on_board(board_frame, s)
+        m.put_selection_on_board(board_frame, s)
 
     # Wait to check required placement before beginning
-    if wait_for_placement(board_frame):
+    if m.wait_for_placement(board_frame):
       break;
     
     cv2.imshow("Samples", sample_frame)

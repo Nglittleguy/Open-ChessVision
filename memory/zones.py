@@ -3,9 +3,6 @@ Memory for Zone Selection -
 Choosing areas of interest for the Video Capture to crop
 """
 
-def zone_event(event, x, y, flag, params):
-  zones[zone_stage]["xy"] = (x,y)
-
 zone_stage = 0
 
 zones = [
@@ -26,3 +23,7 @@ zones = [
     "xy": (0,0)
   },
 ]
+
+def zone_event(event, x, y, flag, params):
+  global zones, zone_stage
+  zones[zone_stage]["xy"] = (x,y)

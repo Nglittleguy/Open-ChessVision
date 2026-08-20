@@ -6,7 +6,6 @@ from chess.board.board_index import coords2xy, xy2tracking
 from camera.white_balance import calc_white_balance, add_white_balance
 from camera.tracking import straighten_chessboard, BORDER_SIZE, CELL_SIZE
 from camera.color_mask import hue2brg
-from memory.zones import zones
 import time
 import cv2
 import numpy as np
@@ -49,7 +48,7 @@ selection = [
     "color": (255, 255, 255),
     "x": 0,
     "y": 0,
-    "range": 25,
+    "range": 10,
     "brightness": 100,
     "saturation": 100,
     "hue": 0,
@@ -193,7 +192,7 @@ def callibrate_frame(sample_frame, board_frame):
     last_time = curr_time
     wb = calc_white_balance(sample_frame, selection[0]["x"], selection[0]["y"], SELECTION_SIZE, SELECTION_THICKNESS)
     assert len(wb) == 3
-    return add_white_balance(sample_frame, wb)
+    sample_frame = add_white_balance(sample_frame, wb)
 
   # Update if board corners are found
   if selection_stage > 1:

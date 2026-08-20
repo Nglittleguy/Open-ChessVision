@@ -5,8 +5,8 @@ import cv2
 #Frame coming in is BRG numpy.ndarray -> translate to HSV to get H
 
 def calc_hue(frame, x, y):
-    frame_x = len(frame)
-    frame_y = len(frame[0])
+    frame_x = len(frame[0])
+    frame_y = len(frame)
     assert len(frame) and len(frame[0])
 
     if y > SELECTION_SIZE and x > SELECTION_SIZE and y < frame_y-SELECTION_SIZE and x < frame_x-SELECTION_SIZE:
