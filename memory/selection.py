@@ -26,6 +26,7 @@ board_rotation = 0
 selection_stage = 0
 last_stage = 0
 last_time = 0
+bw_threshold = 160
 
 board = [[None] * 8]*8
 # board = [[None * 8],[None * 8],[None * 8],[None * 8],[None * 8],[None * 8],[None * 8],[None * 8]]
@@ -78,9 +79,9 @@ selection = [
     "color": (0, 0, 255),
     "x": 0,
     "y": 0,
-    "range": 5,
+    "range": 2,
     "brightness": 90,
-    "saturation": 100,
+    "saturation": 170,
     "hue": 0,
     "centers": [],
     "backup": [],
@@ -94,7 +95,7 @@ selection = [
     "color": (0, 150, 255),
     "x": 0,
     "y": 0,
-    "range": 3,
+    "range": 1,
     "brightness": 180,
     "saturation": 100,
     "hue": 0,
@@ -112,7 +113,7 @@ selection = [
     "y": 0,
     "range": 5, 
     "brightness": 50,
-    "saturation": 20,
+    "saturation": 90,
     "hue": 0,
     "centers": [],
     "backup": [],
@@ -203,6 +204,7 @@ def callibrate_frame(sample_frame, board_frame, step):
   if selection_stage > 1:
     board_frame, keep_backup = straighten_chessboard(board_frame, selection[1]["centers"], selection[1]['backup'], board_rotation)
     if not keep_backup and len(selection[1]['centers']) == 4:
+      print("UPDATE: ", selection[1]['backup'], " to ", selection[1]['centers'])
       selection[1]['backup'] = selection[1]['centers']
 
   board_frame = add_white_balance(board_frame, wb)
@@ -223,8 +225,8 @@ def draw_selection(frame):
   cv2.putText(frame, "Count: " + str(len(selection[selection_stage]["centers"])), (BORDER_SIZE,BORDER_SIZE), cv2.FONT_HERSHEY_SIMPLEX, 1, hue2brg(selection[selection_stage]["hue"]), 1)
 
   for c in selection[selection_stage]["centers"]:
-    cv2.circle(frame, np.add(c, (0,selection[selection_stage]["offset"])), 7, selection[selection_stage]["color"], 3)
-    cv2.circle(frame, np.add(c, (0,selection[selection_stage]["offset"])), 10, (255, 255, 255), 3)
+    cv2.circle(frame, np.add(c, (0,selection[selection_stage]["offset"])), 12, selection[selection_stage]["color"], 3)
+    cv2.circle(frame, np.add(c, (0,selection[selection_stage]["offset"])), 15, (255, 255, 255), 3)
 
   # Draw board cells if the corners are already found
   if selection_stage > 1:
@@ -238,10 +240,10 @@ def put_selection_on_board(frame, i):
   for p in s["pieces"]:
     center = np.add(p["center"], (0, s["offset"]))
 
-    cv2.circle(frame, center, 7, s["color"], 3)
+    cv2.circle(frame, center, 5, s["color"], 3)
     piece_side = (255, 255, 255) if p["white"] else (0,0,0)
 
-    cv2.circle(frame, center, 10, piece_side, 3)
+    cv2.circle(frame, center, 7, piece_side, 3)
     coordinates = coords2xy(center)
 
     if coordinates:

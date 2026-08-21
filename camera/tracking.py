@@ -2,15 +2,16 @@ import cv2
 import numpy as np
 import math
 from camera.color_mask import hue2brg
+import memory.selection as m
 
-TRACKING_HUE_THRESHOLD = 3
+TRACKING_HUE_THRESHOLD = 15
 TRACKING_PIECE_FRAME = 15
-EXTERIOR_THRESHOLD = 100
+EXTERIOR_THRESHOLD = 150
 
 BOARD_SIZE = 400
 CELL_SIZE = int(BOARD_SIZE/8)
 BORDER_SIZE = 30
-DIFF_THRESHOLD = 5
+DIFF_THRESHOLD = 8
 
 ROTATION_ORDER = [
   None,
@@ -53,13 +54,12 @@ def use_backup_corners(centers, backup):
   if len(backup) != 4:
     return False
   
-  c_counter = 0 
-  for i in range(4):
-    if c_counter >= len(centers):
-      break
-    if math.dist(centers[c_counter], backup[i]) < DIFF_THRESHOLD:
-      c_counter = c_counter + 1
-  return c_counter >= 3 # if 3 corners match, then should be good to keep
+  similar = 0
+  for b in backup:
+    if any(math.dist(b, c) for c in centers):
+      similar = similar + 1
+      
+  return len(centers) < 4 or similar >= 3 # if 3 corners match, then should be good to keep
 
   
 # Assuming sorted centers
@@ -116,16 +116,39 @@ def piece_exterior(frame, hue):
         value_list.append(v)
 
   if len(value_list):
-    # val = np.mean(value_list)
+    val = np.mean(value_list)
 
-    #find a value in the 66th percentile brightest pixel (avoid hotspots, glare, and shadows)
-    value_list.sort(reverse=True)
-    val = value_list[int(len(value_list)/3)] 
+    ## find a value in the 66th percentile brightest pixel (avoid hotspots, glare, and shadows)
+    # value_list.sort(reverse=True)
+    # val = value_list[int(len(value_list)/3)] 
     
     return val 
   else: 
     return 255
 
+# Input is the frame (HSV), and a single coordinate, and the expected hue
+def piece_exterior_is_black(hsv_frame, center, hue):
+  dir = [(0,1), (1,0), (0,-1), (-1,0)]
+  hi_threshold = 180 - TRACKING_HUE_THRESHOLD
+  dark_sides = 0
+
+  # Go in 4 directions
+  for d in dir:
+    for distance in range (TRACKING_PIECE_FRAME):
+      if len(hsv_frame) > 0 and center[0] + d[0] * distance >= 0 and center[1] + d[1] * distance >=0 and center[1] + d[0] * distance < len(hsv_frame) and center[0] + d[1] * distance < len(hsv_frame[0]):
+        h, s, v = hsv_frame[center[1] + d[0] * distance][center[0] + d[1] * distance] # order needs to flip because X,Y coordinate is Y,X in cv2
+
+        # If they reach another colour, or a dark spot
+        if not (abs(h - hue) < TRACKING_HUE_THRESHOLD or (hue > hi_threshold and h < hue - hi_threshold) or (hue < TRACKING_HUE_THRESHOLD and h > 180 - (TRACKING_HUE_THRESHOLD - hue))) or v < m.bw_threshold:
+          
+          # Only add the side if they are dark enough
+          if v < m.bw_threshold:
+            dark_sides = dark_sides + 1
+          
+          break
+
+  # If all 4 directions reach a black border, then this is a black piece 
+  return dark_sides == 4
 
 def split_threshold(val_list):
   if len(val_list) < 2:
@@ -145,31 +168,23 @@ def split_threshold(val_list):
   
 
 def track_piece_side(read_frame, centers, backup, hue, draw_frame):
-  # exterior_list = []
+  frame_hsv = cv2.cvtColor(read_frame, cv2.COLOR_BGR2HSV)
 
   piece_centers = centers
   keep_backup = False
-  if use_backup_filter(centers, backup):
-    piece_centers = backup
-    keep_backup = True
+  # if use_backup_filter(centers, backup):
+  #   piece_centers = backup
+  #   keep_backup = True
     
   piece_info = []
 
-  for c in piece_centers:
-    piece_frame = read_frame[c[1]-TRACKING_PIECE_FRAME:c[1]+TRACKING_PIECE_FRAME, c[0]-TRACKING_PIECE_FRAME:c[0]+TRACKING_PIECE_FRAME]
-    if len(piece_frame) and len(piece_frame[0]):
-      piece_roi = cv2.cvtColor(piece_frame, cv2.COLOR_BGR2HSV)
-      piece_ext = piece_exterior(piece_roi, hue)
-      piece_info.append({"center": c, "ext": piece_ext})
-    # exterior_list.append(piece_ext)
+  if len(frame_hsv) and len(frame_hsv[0]):
+    for c in piece_centers:
+      piece_info.append(
+        {
+          "white": not piece_exterior_is_black(frame_hsv, c, hue),
+          "center": c
+        }
+      )
 
-  # list.sort(exterior_list)
-  # split = split_threshold(exterior_list)
-
-  for p in piece_info:
-    # if p["ext"] > split:
-    if p["ext"] > EXTERIOR_THRESHOLD:
-      p["white"] = True
-    else:
-      p["white"] = False
   return piece_info, keep_backup

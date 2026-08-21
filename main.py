@@ -64,7 +64,7 @@ def step_2(vc):
       m.last_stage = m.selection_stage
 
       # When retrieving selection for pieces
-      if m.selection_stage > 0 and m.selection_stage < 8:
+      if m.selection_stage > 0:
         cv2.createTrackbar('Range', 'Adjustments', m.selection[m.selection_stage]['range'], 50, m.nothing)
         cv2.createTrackbar('Brightness', 'Adjustments', m.selection[m.selection_stage]['brightness'], 255, m.nothing)
         cv2.createTrackbar('Saturation', 'Adjustments', m.selection[m.selection_stage]['saturation'], 255, m.nothing)
@@ -93,6 +93,9 @@ def step_2(vc):
     sample_frame = m.draw_hue_picker(sample_frame)
     board_frame = m.draw_selection(board_frame)
 
+    if m.selection_stage == 1:
+      board_frame = cv2.resize(board_frame, (460, 460), interpolation=cv2.INTER_AREA)
+
     cv2.imshow("Samples", sample_frame)
     cv2.imshow("Board", board_frame)
 
@@ -118,7 +121,9 @@ def step_2(vc):
 # Step 3: Waiting for Proper Piece Placement
 def step_3(vc):
   success = True
-
+  cv2.namedWindow("Adjustments")
+  cv2.createTrackbar('B/W Threshold', 'Adjustments', m.bw_threshold, 255, m.nothing)
+  
   while success:
 
     success, frame = vc.read()
@@ -138,7 +143,7 @@ def step_3(vc):
         s["hue"] = calc_hue(sample_frame, s["x"], s["y"])
 
       # If getting board corners
-      board_frame_to_mask = board_frame_wb if stage == 1 else board_frame
+      board_frame_to_mask = board_frame_wb if stage == 1 else board_frame_clear
       mask_frame = color_mask(board_frame_to_mask, s["hue"], s["range"], s['brightness'], s['saturation'])
       s["centers"] = track(mask_frame)
 
@@ -153,7 +158,7 @@ def step_3(vc):
         # Place pieces on the board
         board_frame = m.put_selection_on_board(board_frame, stage)
 
-    # Wait to check required placement before beginning
+    # # Wait to check required placement before beginning
     # board_frame, valid_placement = m.wait_for_placement(board_frame)
     valid_placement = False
     if valid_placement:
@@ -161,6 +166,8 @@ def step_3(vc):
     
     cv2.imshow("Samples", sample_frame)
     cv2.imshow("Board", board_frame)
+    m.bw_threshold = cv2.getTrackbarPos('B/W Threshold', "Adjustments")
+    
     cv2.waitKey(100)
       
   return  
