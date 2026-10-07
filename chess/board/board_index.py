@@ -1,5 +1,7 @@
 from chess.board.board import Board
 from camera.tracking import BOARD_SIZE, BORDER_SIZE, CELL_SIZE
+from chess.pieces.piece import Piece
+
 import numpy as np
 
 BOARD_THRESHOLD = 20
@@ -38,5 +40,3 @@ def coords2xy(coords: tuple[int, int]):
   col = min(max(int((coords[0] - BORDER_SIZE)/CELL_SIZE),0),7)
   row = min(max(int((BOARD_SIZE - (coords[1] - BORDER_SIZE))/CELL_SIZE),0),7)
   return (col, row)
-
-

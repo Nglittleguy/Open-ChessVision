@@ -14,6 +14,7 @@ import time
 
 SELECTION_SIZE = 15
 SELECTION_THICKNESS = 2
+PIECE_ARRAY_SIZE = 3
 FRAME_X = 960
 FRAME_Y = 540
 ALPHA = 0.1
@@ -167,86 +168,86 @@ def run():
       "pieces": [],
       "type": PieceType.KING
     }, 
-    {
-      "name": "Queen",
-      "color": (0, 150, 255),
-      "x": 0,
-      "y": 0,
-      "range": 3,
-      "brightness": 180,
-      "saturation": 100,
-      "hue": 0,
-      "centers": [], 
-      "backup": [],
-      "offset": 0,
-      "start": 2,
-      "pieces": [],
-      "type": PieceType.QUEEN
-    }, 
-    {
-      "name": "Bishop", 
-      "color": (0, 255, 255),
-      "x": 0,
-      "y": 0,
-      "range": 5, 
-      "brightness": 50,
-      "saturation": 20,
-      "hue": 0,
-      "centers": [],
-      "backup": [],
-      "offset": 0,
-      "start": 4,
-      "pieces": [],
-      "type": PieceType.BISHOP
-    }, 
-    {
-      "name": "Knight",
-      "color": (0, 255, 0),
-      "x": 0,
-      "y": 0,
-      "range": 30,
-      "brightness": 100,
-      "saturation": 10,
-      "hue": 0,
-      "centers": [],
-      "backup": [],
-      "offset": 0,
-      "start": 4,
-      "pieces": [],
-      "type": PieceType.KNIGHT
-    }, 
-    {
-      "name": "Rook",
-      "color": (255, 100, 0),
-      "x": 0,
-      "y": 0,
-      "range": 5,
-      "brightness": 65,
-      "saturation": 30,
-      "hue": 0,
-      "centers": [],
-      "backup": [],
-      "offset": 0,
-      "start": 4,
-      "pieces": [],
-      "type": PieceType.ROOK
-    }, 
-    {
-      "name": "Pawn",
-      "color": (255, 0, 150),
-      "x": 0,
-      "y": 0,
-      "range": 15,
-      "brightness": 45,
-      "saturation": 65,
-      "hue": 0,
-      "centers": [],
-      "backup": [],
-      "offset": 0,
-      "start": 16,
-      "pieces": [],
-      "type": PieceType.PAWN
-    }, 
+    # {
+    #   "name": "Queen",
+    #   "color": (0, 150, 255),
+    #   "x": 0,
+    #   "y": 0,
+    #   "range": 3,
+    #   "brightness": 180,
+    #   "saturation": 100,
+    #   "hue": 0,
+    #   "centers": [], 
+    #   "backup": [],
+    #   "offset": 0,
+    #   "start": 2,
+    #   "pieces": [],
+    #   "type": PieceType.QUEEN
+    # }, 
+    # {
+    #   "name": "Bishop", 
+    #   "color": (0, 255, 255),
+    #   "x": 0,
+    #   "y": 0,
+    #   "range": 5, 
+    #   "brightness": 50,
+    #   "saturation": 20,
+    #   "hue": 0,
+    #   "centers": [],
+    #   "backup": [],
+    #   "offset": 0,
+    #   "start": 4,
+    #   "pieces": [],
+    #   "type": PieceType.BISHOP
+    # }, 
+    # {
+    #   "name": "Knight",
+    #   "color": (0, 255, 0),
+    #   "x": 0,
+    #   "y": 0,
+    #   "range": 30,
+    #   "brightness": 100,
+    #   "saturation": 10,
+    #   "hue": 0,
+    #   "centers": [],
+    #   "backup": [],
+    #   "offset": 0,
+    #   "start": 4,
+    #   "pieces": [],
+    #   "type": PieceType.KNIGHT
+    # }, 
+    # {
+    #   "name": "Rook",
+    #   "color": (255, 100, 0),
+    #   "x": 0,
+    #   "y": 0,
+    #   "range": 5,
+    #   "brightness": 65,
+    #   "saturation": 30,
+    #   "hue": 0,
+    #   "centers": [],
+    #   "backup": [],
+    #   "offset": 0,
+    #   "start": 4,
+    #   "pieces": [],
+    #   "type": PieceType.ROOK
+    # }, 
+    # {
+    #   "name": "Pawn",
+    #   "color": (255, 0, 150),
+    #   "x": 0,
+    #   "y": 0,
+    #   "range": 15,
+    #   "brightness": 45,
+    #   "saturation": 65,
+    #   "hue": 0,
+    #   "centers": [],
+    #   "backup": [],
+    #   "offset": 0,
+    #   "start": 16,
+    #   "pieces": [],
+    #   "type": PieceType.PAWN
+    # }, 
     {
       "name": "Starting"
     }
@@ -278,7 +279,7 @@ def run():
 
     if selection_stage > last_stage:
       last_stage = selection_stage
-      if selection_stage < 8:
+      if selection_stage < PIECE_ARRAY_SIZE: #todo select size is 8
         cv2.createTrackbar('Range', 'Adjustments', selection[selection_stage]['range'], 50, nothing)
         cv2.createTrackbar('Brightness', 'Adjustments', selection[selection_stage]['brightness'], 255, nothing)
         cv2.createTrackbar('Saturation', 'Adjustments', selection[selection_stage]['saturation'], 255, nothing)
@@ -305,10 +306,10 @@ def run():
       board_frame = add_white_balance(board_frame, wb)
       board_frame_clear = board_frame.copy()
 
-      if selection_stage < 8 and selection[selection_stage]["x"] != 0 and selection[selection_stage]["y"] != 0:
+      if selection_stage < PIECE_ARRAY_SIZE and selection[selection_stage]["x"] != 0 and selection[selection_stage]["y"] != 0:
         selection[selection_stage]["hue"] = calc_hue(sample_frame, selection[selection_stage]["x"], selection[selection_stage]["y"], SELECTION_SIZE, sample_frame_x, sample_frame_y, SELECTION_THICKNESS)
 
-      if selection_stage < 8:
+      if selection_stage < PIECE_ARRAY_SIZE:
         selection[selection_stage]["range"] = cv2.getTrackbarPos('Range', "Adjustments")
         selection[selection_stage]["offset"] = cv2.getTrackbarPos('Y-Offset', "Adjustments")
         selection[selection_stage]["saturation"] = cv2.getTrackbarPos('Saturation', "Adjustments")
@@ -327,12 +328,12 @@ def run():
     cv2.setMouseCallback('Samples', sample_event)
     
     # Keep Hue Picker on Callibration Window
-    for stage in range(min(selection_stage + 1, 8)):
+    for stage in range(min(selection_stage + 1, PIECE_ARRAY_SIZE)):
       cv2.rectangle(sample_frame, (selection[stage]["x"]-SELECTION_SIZE, selection[stage]["y"]-SELECTION_SIZE), (selection[stage]["x"]+SELECTION_SIZE, selection[stage]["y"]+SELECTION_SIZE), selection[stage]["color"], SELECTION_THICKNESS) 
       cv2.putText(sample_frame, selection[stage]["name"], (selection[stage]["x"]-30, selection[stage]["y"]-30), cv2.FONT_HERSHEY_SIMPLEX, 1, selection[stage]["color"], 1)
 
     # Pick the Hue
-    if selection_stage > 0 and selection_stage < 8:
+    if selection_stage > 0 and selection_stage < PIECE_ARRAY_SIZE:
       
       cv2.putText(board_frame, "Count: " + str(len(selection[selection_stage]["centers"])), (BORDER_SIZE,BORDER_SIZE), cv2.FONT_HERSHEY_SIMPLEX, 1, hue2brg(selection[selection_stage]["hue"]), 1)
 
@@ -348,7 +349,7 @@ def run():
 
     if selection_stage == 8:
       board = [[None] * 8]*8
-      for i in range(1, 8):
+      for i in range(1, PIECE_ARRAY_SIZE):
         selection[i]["hue"] = calc_hue(sample_frame, selection[i]["x"], selection[i]["y"], SELECTION_SIZE, sample_frame_x, sample_frame_y, SELECTION_THICKNESS)
         if i == 1:
           board_frame_to_mask = board_frame_raw
@@ -378,7 +379,7 @@ def run():
     key = cv2.waitKey(100) & 0xFF
 
     if key == ord(' '): # next on spacebar
-      if selection_stage < 8: # disallow passage on waiting piece state
+      if selection_stage < PIECE_ARRAY_SIZE: # disallow passage on waiting piece state
         selection_stage = selection_stage + 1
       if selection_stage >= len(selection):
         break

@@ -9,6 +9,8 @@ from camera.color_mask import hue2brg
 import time
 import cv2
 import numpy as np
+import json
+from dataclasses import dataclass, asdict
 
 """
 Memory for Colour Selection - 
@@ -19,7 +21,8 @@ SELECTION_SIZE = 15
 SELECTION_THICKNESS = 2
 WB_CHECK_PERIOD = 5 #seconds
 SAMPLE_TEXT_OFFSET = 30
-ALPHA = 0.1
+ALPHA = 0.5
+PIECE_ARRAY_SIZE = 3
 
 wb = (0,0,0)
 board_rotation = 0
@@ -28,7 +31,7 @@ last_stage = 0
 last_time = 0
 bw_threshold = 160
 
-board = [[None] * 8]*8
+board = [[None for _1 in range(8)] for _2 in range(8)]
 # board = [[None * 8],[None * 8],[None * 8],[None * 8],[None * 8],[None * 8],[None * 8],[None * 8]]
 
 '''
@@ -90,92 +93,96 @@ selection = [
     "pieces": [],
     "type": PieceType.KING
   }, 
-  {
-    "name": "Queen",
-    "color": (0, 150, 255),
-    "x": 0,
-    "y": 0,
-    "range": 1,
-    "brightness": 180,
-    "saturation": 100,
-    "hue": 0,
-    "centers": [], 
-    "backup": [],
-    "offset": 0,
-    "start": 2,
-    "pieces": [],
-    "type": PieceType.QUEEN
-  }, 
-  {
-    "name": "Bishop", 
-    "color": (0, 255, 255),
-    "x": 0,
-    "y": 0,
-    "range": 5, 
-    "brightness": 50,
-    "saturation": 90,
-    "hue": 0,
-    "centers": [],
-    "backup": [],
-    "offset": 0,
-    "start": 4,
-    "pieces": [],
-    "type": PieceType.BISHOP
-  }, 
-  {
-    "name": "Knight",
-    "color": (0, 255, 0),
-    "x": 0,
-    "y": 0,
-    "range": 30,
-    "brightness": 100,
-    "saturation": 10,
-    "hue": 0,
-    "centers": [],
-    "backup": [],
-    "offset": 0,
-    "start": 4,
-    "pieces": [],
-    "type": PieceType.KNIGHT
-  }, 
-  {
-    "name": "Rook",
-    "color": (255, 100, 0),
-    "x": 0,
-    "y": 0,
-    "range": 5,
-    "brightness": 65,
-    "saturation": 30,
-    "hue": 0,
-    "centers": [],
-    "backup": [],
-    "offset": 0,
-    "start": 4,
-    "pieces": [],
-    "type": PieceType.ROOK
-  }, 
-  {
-    "name": "Pawn",
-    "color": (255, 0, 150),
-    "x": 0,
-    "y": 0,
-    "range": 15,
-    "brightness": 45,
-    "saturation": 65,
-    "hue": 0,
-    "centers": [],
-    "backup": [],
-    "offset": 0,
-    "start": 16,
-    "pieces": [],
-    "type": PieceType.PAWN
-  }
+  # {
+  #   "name": "Queen",
+  #   "color": (0, 150, 255),
+  #   "x": 0,
+  #   "y": 0,
+  #   "range": 1,
+  #   "brightness": 180,
+  #   "saturation": 100,
+  #   "hue": 0,
+  #   "centers": [], 
+  #   "backup": [],
+  #   "offset": 0,
+  #   "start": 2,
+  #   "pieces": [],
+  #   "type": PieceType.QUEEN
+  # }, 
+  # {
+  #   "name": "Bishop", 
+  #   "color": (0, 255, 255),
+  #   "x": 0,
+  #   "y": 0,
+  #   "range": 5, 
+  #   "brightness": 50,
+  #   "saturation": 90,
+  #   "hue": 0,
+  #   "centers": [],
+  #   "backup": [],
+  #   "offset": 0,
+  #   "start": 4,
+  #   "pieces": [],
+  #   "type": PieceType.BISHOP
+  # }, 
+  # {
+  #   "name": "Knight",
+  #   "color": (0, 255, 0),
+  #   "x": 0,
+  #   "y": 0,
+  #   "range": 30,
+  #   "brightness": 100,
+  #   "saturation": 10,
+  #   "hue": 0,
+  #   "centers": [],
+  #   "backup": [],
+  #   "offset": 0,
+  #   "start": 4,
+  #   "pieces": [],
+  #   "type": PieceType.KNIGHT
+  # }, 
+  # {
+  #   "name": "Rook",
+  #   "color": (255, 100, 0),
+  #   "x": 0,
+  #   "y": 0,
+  #   "range": 5,
+  #   "brightness": 65,
+  #   "saturation": 30,
+  #   "hue": 0,
+  #   "centers": [],
+  #   "backup": [],
+  #   "offset": 0,
+  #   "start": 4,
+  #   "pieces": [],
+  #   "type": PieceType.ROOK
+  # }, 
+  # {
+  #   "name": "Pawn",
+  #   "color": (255, 0, 150),
+  #   "x": 0,
+  #   "y": 0,
+  #   "range": 15,
+  #   "brightness": 45,
+  #   "saturation": 65,
+  #   "hue": 0,
+  #   "centers": [],
+  #   "backup": [],
+  #   "offset": 0,
+  #   "start": 16,
+  #   "pieces": [],
+  #   "type": PieceType.PAWN
+  # }
 ]
 
 def sample_event(_event, x, y, _flags, _params):
-  if selection_stage >= 0 and selection_stage < 8:
+  if selection_stage >= 0 and selection_stage < PIECE_ARRAY_SIZE:
     selection[selection_stage]["x"] = x
     selection[selection_stage]["y"] = y
+
+def clear_board():
+  global board
+  board = [[None for _1 in range(8)] for _2 in range(8)]
 
 def nothing(x):
   return()
@@ -204,7 +211,6 @@ def callibrate_frame(sample_frame, board_frame, step):
   if selection_stage > 1:
     board_frame, keep_backup = straighten_chessboard(board_frame, selection[1]["centers"], selection[1]['backup'], board_rotation)
     if not keep_backup and len(selection[1]['centers']) == 4:
-      print("UPDATE: ", selection[1]['backup'], " to ", selection[1]['centers'])
       selection[1]['backup'] = selection[1]['centers']
 
   board_frame = add_white_balance(board_frame, wb)
@@ -236,6 +242,8 @@ def draw_selection(frame):
 
 # Takes all pieces of a certain selection, and puts them on the board memory
 def put_selection_on_board(frame, i):
+  
+  clear_board()
   s = selection[i]
   for p in s["pieces"]:
     center = np.add(p["center"], (0, s["offset"]))
@@ -248,16 +256,18 @@ def put_selection_on_board(frame, i):
 
     if coordinates:
       board[coordinates[0]][coordinates[1]] = Piece(p["white"], s["type"], coordinates)
+      print("Adding to Board: ", board[coordinates[0]][coordinates[1]])
   return frame
 
 def wait_for_placement(frame):
   valid = True
-  copy = frame.copy()
+  overlay = frame.copy()
   for p in INIT_BOARD_STATE:
     x, y = p.position
     if not board[x][y] or board[x][y].color != p.color or board[x][y].type != p.type:
       valid = False
     coord = xy2tracking((x,y))
-    cv2.rectangle(copy, coord, (coord[0]+CELL_SIZE, coord[1]+CELL_SIZE), (0,255,0) if valid else (0,0,255), cv2.FILLED)
-    cv2.addWeighted(copy, ALPHA, frame, 1-ALPHA, 0, frame)
-  return frame, valid
+    cv2.rectangle(overlay, coord, (coord[0]+CELL_SIZE, coord[1]+CELL_SIZE), (0,255,0) if valid else (0,0,255), cv2.FILLED)
+    
+  output = cv2.addWeighted(overlay, ALPHA, frame, 1-ALPHA, 0)
+  return output, valid

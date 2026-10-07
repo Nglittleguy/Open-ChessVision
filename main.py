@@ -8,6 +8,7 @@ from camera.tracking import track, track_piece_side
 FRAME_X = 960
 FRAME_Y = 540
 ALPHA = 0.1
+PIECE_ARRAY_SIZE = 3
 
 
 # Step 1: Zone Selection
@@ -136,7 +137,7 @@ def step_3(vc):
 
     sample_frame = m.draw_hue_picker(sample_frame)
 
-    for stage in range(1,8):
+    for stage in range(1,PIECE_ARRAY_SIZE):
       s = m.selection[stage]
       # Periodically update sample hue
       if update_sample:
@@ -158,8 +159,9 @@ def step_3(vc):
         # Place pieces on the board
         board_frame = m.put_selection_on_board(board_frame, stage)
 
+    print(m.board)
     # # Wait to check required placement before beginning
-    # board_frame, valid_placement = m.wait_for_placement(board_frame)
+    board_frame, valid_placement = m.wait_for_placement(board_frame) 
     valid_placement = False
     if valid_placement:
       break;
@@ -168,7 +170,7 @@ def step_3(vc):
     cv2.imshow("Board", board_frame)
     m.bw_threshold = cv2.getTrackbarPos('B/W Threshold', "Adjustments")
     
-    cv2.waitKey(100)
+    cv2.waitKey()
       
   return  
 
