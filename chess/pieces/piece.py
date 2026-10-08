@@ -3,7 +3,8 @@ from chess.pieces.piece_enums import PieceColor, PieceType
 class Piece:
 
   def __init__(
-      self, color: PieceColor, 
+      self, 
+      color: PieceColor, 
       type: PieceType, 
       position: tuple[int, int], 
       hasMoved: bool = "False", 
@@ -16,7 +17,7 @@ class Piece:
     self.pawnDoubleStep = pawnDoubleStep
 
   def __repr__(self):
-    color = "White" if self.color else "Black"
+    color = "White" if self.color == PieceColor.WHITE else "Black"
     type = "NULL"
     match self.type:
       case PieceType.KING:
@@ -33,4 +34,4 @@ class Piece:
         type = "Pawn"
     x = self.position[0]
     y = self.position[1]
-    return f'{color} {type}: [{x}, {y}]'
+    return f'{color} {type} [{x}, {y}]'

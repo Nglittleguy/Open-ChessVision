@@ -1,14 +1,13 @@
 from chess.pieces.piece import Piece
 from camera.tracking import BOARD_SIZE, BORDER_SIZE, CELL_SIZE
-import cv2
 
 class Board:
 
   def __init__(
         self, **kwargs
     ):
-      board = [[None]*8]*8
-      tempBoard = [[None]*8]*8
+      board = [[None for _1 in range(8)] for _2 in range(8)]
+      tempBoard = [[None for _1 in range(8)] for _2 in range(8)]
       isSize = True
 
       copy_board = kwargs.get['board']

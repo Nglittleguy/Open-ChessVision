@@ -22,7 +22,7 @@ SELECTION_THICKNESS = 2
 WB_CHECK_PERIOD = 5 #seconds
 SAMPLE_TEXT_OFFSET = 30
 ALPHA = 0.5
-PIECE_ARRAY_SIZE = 3
+PIECE_ARRAY_SIZE = 8
 
 wb = (0,0,0)
 board_rotation = 0
@@ -32,7 +32,6 @@ last_time = 0
 bw_threshold = 160
 
 board = [[None for _1 in range(8)] for _2 in range(8)]
-# board = [[None * 8],[None * 8],[None * 8],[None * 8],[None * 8],[None * 8],[None * 8],[None * 8]]
 
 '''
 0: White
@@ -93,86 +92,86 @@ selection = [
     "pieces": [],
     "type": PieceType.KING
   }, 
-  # {
-  #   "name": "Queen",
-  #   "color": (0, 150, 255),
-  #   "x": 0,
-  #   "y": 0,
-  #   "range": 1,
-  #   "brightness": 180,
-  #   "saturation": 100,
-  #   "hue": 0,
-  #   "centers": [], 
-  #   "backup": [],
-  #   "offset": 0,
-  #   "start": 2,
-  #   "pieces": [],
-  #   "type": PieceType.QUEEN
-  # }, 
-  # {
-  #   "name": "Bishop", 
-  #   "color": (0, 255, 255),
-  #   "x": 0,
-  #   "y": 0,
-  #   "range": 5, 
-  #   "brightness": 50,
-  #   "saturation": 90,
-  #   "hue": 0,
-  #   "centers": [],
-  #   "backup": [],
-  #   "offset": 0,
-  #   "start": 4,
-  #   "pieces": [],
-  #   "type": PieceType.BISHOP
-  # }, 
-  # {
-  #   "name": "Knight",
-  #   "color": (0, 255, 0),
-  #   "x": 0,
-  #   "y": 0,
-  #   "range": 30,
-  #   "brightness": 100,
-  #   "saturation": 10,
-  #   "hue": 0,
-  #   "centers": [],
-  #   "backup": [],
-  #   "offset": 0,
-  #   "start": 4,
-  #   "pieces": [],
-  #   "type": PieceType.KNIGHT
-  # }, 
-  # {
-  #   "name": "Rook",
-  #   "color": (255, 100, 0),
-  #   "x": 0,
-  #   "y": 0,
-  #   "range": 5,
-  #   "brightness": 65,
-  #   "saturation": 30,
-  #   "hue": 0,
-  #   "centers": [],
-  #   "backup": [],
-  #   "offset": 0,
-  #   "start": 4,
-  #   "pieces": [],
-  #   "type": PieceType.ROOK
-  # }, 
-  # {
-  #   "name": "Pawn",
-  #   "color": (255, 0, 150),
-  #   "x": 0,
-  #   "y": 0,
-  #   "range": 15,
-  #   "brightness": 45,
-  #   "saturation": 65,
-  #   "hue": 0,
-  #   "centers": [],
-  #   "backup": [],
-  #   "offset": 0,
-  #   "start": 16,
-  #   "pieces": [],
-  #   "type": PieceType.PAWN
-  # }
+  {
+    "name": "Queen",
+    "color": (0, 150, 255),
+    "x": 0,
+    "y": 0,
+    "range": 1,
+    "brightness": 180,
+    "saturation": 100,
+    "hue": 0,
+    "centers": [], 
+    "backup": [],
+    "offset": 0,
+    "start": 2,
+    "pieces": [],
+    "type": PieceType.QUEEN
+  }, 
+  {
+    "name": "Bishop", 
+    "color": (0, 255, 255),
+    "x": 0,
+    "y": 0,
+    "range": 5, 
+    "brightness": 50,
+    "saturation": 90,
+    "hue": 0,
+    "centers": [],
+    "backup": [],
+    "offset": 0,
+    "start": 4,
+    "pieces": [],
+    "type": PieceType.BISHOP
+  }, 
+  {
+    "name": "Knight",
+    "color": (0, 255, 0),
+    "x": 0,
+    "y": 0,
+    "range": 30,
+    "brightness": 100,
+    "saturation": 10,
+    "hue": 0,
+    "centers": [],
+    "backup": [],
+    "offset": 0,
+    "start": 4,
+    "pieces": [],
+    "type": PieceType.KNIGHT
+  }, 
+  {
+    "name": "Rook",
+    "color": (255, 100, 0),
+    "x": 0,
+    "y": 0,
+    "range": 5,
+    "brightness": 65,
+    "saturation": 30,
+    "hue": 0,
+    "centers": [],
+    "backup": [],
+    "offset": 0,
+    "start": 4,
+    "pieces": [],
+    "type": PieceType.ROOK
+  }, 
+  {
+    "name": "Pawn",
+    "color": (255, 0, 150),
+    "x": 0,
+    "y": 0,
+    "range": 15,
+    "brightness": 45,
+    "saturation": 65,
+    "hue": 0,
+    "centers": [],
+    "backup": [],
+    "offset": 0,
+    "start": 16,
+    "pieces": [],
+    "type": PieceType.PAWN
+  }
 ]
 
 def sample_event(_event, x, y, _flags, _params):
@@ -242,8 +241,6 @@ def draw_selection(frame):
 
 # Takes all pieces of a certain selection, and puts them on the board memory
 def put_selection_on_board(frame, i):
-  
-  clear_board()
   s = selection[i]
   for p in s["pieces"]:
     center = np.add(p["center"], (0, s["offset"]))
@@ -255,19 +252,24 @@ def put_selection_on_board(frame, i):
     coordinates = coords2xy(center)
 
     if coordinates:
-      board[coordinates[0]][coordinates[1]] = Piece(p["white"], s["type"], coordinates)
-      print("Adding to Board: ", board[coordinates[0]][coordinates[1]])
+      board[coordinates[0]][coordinates[1]] = Piece(PieceColor.WHITE if p["white"] else PieceColor.BLACK, s["type"], coordinates)
   return frame
 
 def wait_for_placement(frame):
   valid = True
   overlay = frame.copy()
+  print(board)
   for p in INIT_BOARD_STATE:
+    piece_valid = True
     x, y = p.position
+    
     if not board[x][y] or board[x][y].color != p.color or board[x][y].type != p.type:
+      piece_valid = False
       valid = False
     coord = xy2tracking((x,y))
-    cv2.rectangle(overlay, coord, (coord[0]+CELL_SIZE, coord[1]+CELL_SIZE), (0,255,0) if valid else (0,0,255), cv2.FILLED)
-    
+    print("Expecting - ", p, " | Actual - ", board[x][y], " | ", piece_valid)
+    cv2.rectangle(overlay, coord, (coord[0]+CELL_SIZE, coord[1]+CELL_SIZE), (0,255,0) if piece_valid else (0,0,255), cv2.FILLED)
+
+  print("--")
   output = cv2.addWeighted(overlay, ALPHA, frame, 1-ALPHA, 0)
   return output, valid

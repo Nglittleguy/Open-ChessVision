@@ -14,7 +14,7 @@ import time
 
 SELECTION_SIZE = 15
 SELECTION_THICKNESS = 2
-PIECE_ARRAY_SIZE = 3
+PIECE_ARRAY_SIZE = 8
 FRAME_X = 960
 FRAME_Y = 540
 ALPHA = 0.1
@@ -168,86 +168,86 @@ def run():
       "pieces": [],
       "type": PieceType.KING
     }, 
-    # {
-    #   "name": "Queen",
-    #   "color": (0, 150, 255),
-    #   "x": 0,
-    #   "y": 0,
-    #   "range": 3,
-    #   "brightness": 180,
-    #   "saturation": 100,
-    #   "hue": 0,
-    #   "centers": [], 
-    #   "backup": [],
-    #   "offset": 0,
-    #   "start": 2,
-    #   "pieces": [],
-    #   "type": PieceType.QUEEN
-    # }, 
-    # {
-    #   "name": "Bishop", 
-    #   "color": (0, 255, 255),
-    #   "x": 0,
-    #   "y": 0,
-    #   "range": 5, 
-    #   "brightness": 50,
-    #   "saturation": 20,
-    #   "hue": 0,
-    #   "centers": [],
-    #   "backup": [],
-    #   "offset": 0,
-    #   "start": 4,
-    #   "pieces": [],
-    #   "type": PieceType.BISHOP
-    # }, 
-    # {
-    #   "name": "Knight",
-    #   "color": (0, 255, 0),
-    #   "x": 0,
-    #   "y": 0,
-    #   "range": 30,
-    #   "brightness": 100,
-    #   "saturation": 10,
-    #   "hue": 0,
-    #   "centers": [],
-    #   "backup": [],
-    #   "offset": 0,
-    #   "start": 4,
-    #   "pieces": [],
-    #   "type": PieceType.KNIGHT
-    # }, 
-    # {
-    #   "name": "Rook",
-    #   "color": (255, 100, 0),
-    #   "x": 0,
-    #   "y": 0,
-    #   "range": 5,
-    #   "brightness": 65,
-    #   "saturation": 30,
-    #   "hue": 0,
-    #   "centers": [],
-    #   "backup": [],
-    #   "offset": 0,
-    #   "start": 4,
-    #   "pieces": [],
-    #   "type": PieceType.ROOK
-    # }, 
-    # {
-    #   "name": "Pawn",
-    #   "color": (255, 0, 150),
-    #   "x": 0,
-    #   "y": 0,
-    #   "range": 15,
-    #   "brightness": 45,
-    #   "saturation": 65,
-    #   "hue": 0,
-    #   "centers": [],
-    #   "backup": [],
-    #   "offset": 0,
-    #   "start": 16,
-    #   "pieces": [],
-    #   "type": PieceType.PAWN
-    # }, 
+    {
+      "name": "Queen",
+      "color": (0, 150, 255),
+      "x": 0,
+      "y": 0,
+      "range": 3,
+      "brightness": 180,
+      "saturation": 100,
+      "hue": 0,
+      "centers": [], 
+      "backup": [],
+      "offset": 0,
+      "start": 2,
+      "pieces": [],
+      "type": PieceType.QUEEN
+    }, 
+    {
+      "name": "Bishop", 
+      "color": (0, 255, 255),
+      "x": 0,
+      "y": 0,
+      "range": 5, 
+      "brightness": 50,
+      "saturation": 20,
+      "hue": 0,
+      "centers": [],
+      "backup": [],
+      "offset": 0,
+      "start": 4,
+      "pieces": [],
+      "type": PieceType.BISHOP
+    }, 
+    {
+      "name": "Knight",
+      "color": (0, 255, 0),
+      "x": 0,
+      "y": 0,
+      "range": 30,
+      "brightness": 100,
+      "saturation": 10,
+      "hue": 0,
+      "centers": [],
+      "backup": [],
+      "offset": 0,
+      "start": 4,
+      "pieces": [],
+      "type": PieceType.KNIGHT
+    }, 
+    {
+      "name": "Rook",
+      "color": (255, 100, 0),
+      "x": 0,
+      "y": 0,
+      "range": 5,
+      "brightness": 65,
+      "saturation": 30,
+      "hue": 0,
+      "centers": [],
+      "backup": [],
+      "offset": 0,
+      "start": 4,
+      "pieces": [],
+      "type": PieceType.ROOK
+    }, 
+    {
+      "name": "Pawn",
+      "color": (255, 0, 150),
+      "x": 0,
+      "y": 0,
+      "range": 15,
+      "brightness": 45,
+      "saturation": 65,
+      "hue": 0,
+      "centers": [],
+      "backup": [],
+      "offset": 0,
+      "start": 16,
+      "pieces": [],
+      "type": PieceType.PAWN
+    }, 
     {
       "name": "Starting"
     }
@@ -348,7 +348,7 @@ def run():
           cv2.rectangle(board_frame, (BORDER_SIZE+x*CELL_SIZE, BORDER_SIZE+y*CELL_SIZE), (BORDER_SIZE+(x+1)*CELL_SIZE, BORDER_SIZE+(y+1)*CELL_SIZE), (150, 0, 255), 1)
 
     if selection_stage == 8:
-      board = [[None] * 8]*8
+      board = [[None for _1 in range(8)] for _2 in range(8)]
       for i in range(1, PIECE_ARRAY_SIZE):
         selection[i]["hue"] = calc_hue(sample_frame, selection[i]["x"], selection[i]["y"], SELECTION_SIZE, sample_frame_x, sample_frame_y, SELECTION_THICKNESS)
         if i == 1:

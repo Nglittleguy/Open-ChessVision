@@ -8,7 +8,7 @@ from camera.tracking import track, track_piece_side
 FRAME_X = 960
 FRAME_Y = 540
 ALPHA = 0.1
-PIECE_ARRAY_SIZE = 3
+PIECE_ARRAY_SIZE = 8
 
 
 # Step 1: Zone Selection
@@ -130,12 +130,15 @@ def step_3(vc):
     success, frame = vc.read()
     sample_frame = frame[z.zones[0]['xy'][1]:z.zones[1]['xy'][1], z.zones[0]['xy'][0]:z.zones[1]['xy'][0]]
     board_frame = frame[z.zones[2]['xy'][1]:z.zones[3]['xy'][1], z.zones[2]['xy'][0]:z.zones[3]['xy'][0]]
-
+    
     # Maintain callibration, updating periodically
     sample_frame, board_frame, board_frame_wb, update_sample = m.callibrate_frame(sample_frame, board_frame, 3)
     board_frame_clear = board_frame.copy()
 
     sample_frame = m.draw_hue_picker(sample_frame)
+
+    # Clear board and start initalization each frame
+    m.clear_board()
 
     for stage in range(1,PIECE_ARRAY_SIZE):
       s = m.selection[stage]
@@ -159,7 +162,6 @@ def step_3(vc):
         # Place pieces on the board
         board_frame = m.put_selection_on_board(board_frame, stage)
 
-    print(m.board)
     # # Wait to check required placement before beginning
     board_frame, valid_placement = m.wait_for_placement(board_frame) 
     valid_placement = False
