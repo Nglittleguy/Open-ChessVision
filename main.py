@@ -1,4 +1,5 @@
 import cv2
+import numpy as np
 import memory.zones as z
 import memory.selection as m 
 from camera.color_mask import color_mask
@@ -89,16 +90,18 @@ def step_2(vc):
 
       mask_frame = color_mask(board_frame, s["hue"], s["range"], s["brightness"], s["saturation"])
       s["centers"] = track(mask_frame)
-      cv2.imshow("Mask", mask_frame)
 
     sample_frame = m.draw_hue_picker(sample_frame)
     board_frame = m.draw_selection(board_frame)
-
-    if m.selection_stage == 1:
+    combined_frame = board_frame
+    
+    if m.selection_stage >= 1 and m.selection_stage < PIECE_ARRAY_SIZE:
       board_frame = cv2.resize(board_frame, (460, 460), interpolation=cv2.INTER_AREA)
+      mask_frame = cv2.resize(mask_frame, (460, 460), interpolation=cv2.INTER_AREA)
+      combined_frame = np.concatenate((board_frame, cv2.cvtColor(mask_frame, cv2.COLOR_GRAY2RGB)), axis=1)
 
     cv2.imshow("Samples", sample_frame)
-    cv2.imshow("Board", board_frame)
+    cv2.imshow("Board", combined_frame)
 
     # Only update 0.1s
     key = cv2.waitKey(100) & 0xFF
@@ -167,12 +170,14 @@ def step_3(vc):
     valid_placement = False
     if valid_placement:
       break;
-    
+
+    board_frame = cv2.resize(board_frame, (460, 460), interpolation=cv2.INTER_AREA)
+
     cv2.imshow("Samples", sample_frame)
     cv2.imshow("Board", board_frame)
     m.bw_threshold = cv2.getTrackbarPos('B/W Threshold', "Adjustments")
     
-    cv2.waitKey()
+    cv2.waitKey(100)
       
   return  
 

@@ -235,7 +235,7 @@ def draw_selection(frame):
 
   # Draw board cells if the corners are already found
   if selection_stage > 1:
-    frame = draw_board(frame)
+    frame = draw_board(frame, cv2)
 
   return frame
 
@@ -258,7 +258,6 @@ def put_selection_on_board(frame, i):
 def wait_for_placement(frame):
   valid = True
   overlay = frame.copy()
-  print(board)
   for p in INIT_BOARD_STATE:
     piece_valid = True
     x, y = p.position
@@ -267,9 +266,7 @@ def wait_for_placement(frame):
       piece_valid = False
       valid = False
     coord = xy2tracking((x,y))
-    print("Expecting - ", p, " | Actual - ", board[x][y], " | ", piece_valid)
     cv2.rectangle(overlay, coord, (coord[0]+CELL_SIZE, coord[1]+CELL_SIZE), (0,255,0) if piece_valid else (0,0,255), cv2.FILLED)
 
-  print("--")
   output = cv2.addWeighted(overlay, ALPHA, frame, 1-ALPHA, 0)
   return output, valid
