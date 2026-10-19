@@ -30,6 +30,10 @@ selection_stage = 0
 last_stage = 0
 last_time = 0
 bw_threshold = 160
+distort_x = 50
+distort_y = 50
+distort_amount = 25
+DISTORT_FACATOR = 1
 
 board = [[None for _1 in range(8)] for _2 in range(8)]
 

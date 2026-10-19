@@ -127,6 +127,10 @@ def step_3(vc):
   success = True
   cv2.namedWindow("Adjustments")
   cv2.createTrackbar('B/W Threshold', 'Adjustments', m.bw_threshold, 255, m.nothing)
+  cv2.createTrackbar('Distort X', 'Adjustments', m.distort_x, 100, m.nothing)
+  cv2.createTrackbar('Distort Y', 'Adjustments', m.distort_y, 100, m.nothing)
+  cv2.createTrackbar('Distort Amount', 'Adjustments', m.distort_amount, 100, m.nothing)
+
   
   while success:
 
@@ -176,9 +180,13 @@ def step_3(vc):
     cv2.imshow("Samples", sample_frame)
     cv2.imshow("Board", board_frame)
     m.bw_threshold = cv2.getTrackbarPos('B/W Threshold', "Adjustments")
+    m.distort_x = cv2.getTrackbarPos('Distort X', "Adjustments")
+    m.distort_y = cv2.getTrackbarPos('Distort Y', "Adjustments")
+    m.distort_amount = cv2.getTrackbarPos('Distort Amount', "Adjustments")
     
     cv2.waitKey(100)
-      
+
+  print("Valid Now")
   return  
 
 def main():
@@ -199,3 +207,5 @@ def main():
 
 if __name__=="__main__":
   main()
+  
+

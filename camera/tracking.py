@@ -148,7 +148,7 @@ def piece_exterior_is_black(hsv_frame, center, hue):
           break
 
   # If all 4 directions reach a black border, then this is a black piece 
-  return dark_sides == 4
+  return dark_sides == len(dir)
 
 def split_threshold(val_list):
   if len(val_list) < 2:
@@ -165,7 +165,16 @@ def split_threshold(val_list):
     i = i + 1
 
   return int((val_list[gap_i] + val_list[gap_i-1])/2)
-  
+
+def fix_distortion(center, length):
+  [x,y] = center
+  x_normalized = float(x)/length
+  y_normalized = float(y)/length
+
+  vec = (float(m.distort_x)/100 - x_normalized, float(m.distort_y)/100 - y_normalized)
+  modified = (int(x + vec[0] * m.distort_amount * m.DISTORT_FACATOR), int(y + vec[1] * m.distort_amount * m.DISTORT_FACATOR) )
+  return (modified) 
+    
 
 def track_piece_side(read_frame, centers, backup, hue, draw_frame):
   frame_hsv = cv2.cvtColor(read_frame, cv2.COLOR_BGR2HSV)
@@ -183,7 +192,7 @@ def track_piece_side(read_frame, centers, backup, hue, draw_frame):
       piece_info.append(
         {
           "white": not piece_exterior_is_black(frame_hsv, c, hue),
-          "center": c
+          "center": fix_distortion(c, len(read_frame))
         }
       )
 
