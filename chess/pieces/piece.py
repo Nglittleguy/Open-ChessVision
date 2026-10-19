@@ -35,3 +35,24 @@ class Piece:
     x = self.position[0]
     y = self.position[1]
     return f'{color} {type} [{x}, {y}]'
+
+  def fen_notation(self):
+    letter = ""
+    match self.type:
+      case PieceType.KING:
+        letter = "K"
+      case PieceType.QUEEN:
+        letter = "Q"
+      case PieceType.ROOK:
+        letter = "R"
+      case PieceType.BISHOP:
+        letter = "B"
+      case PieceType.KNIGHT: 
+        letter = "N"
+      case PieceType.PAWN:
+        letter = "P"
+
+    if self.color == PieceColor.BLACK:
+      letter = letter.lower()
+
+    return letter

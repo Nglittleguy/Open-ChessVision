@@ -23,6 +23,32 @@ class Board:
 
       self.board = tempBoard if isSize else board
 
+  def to_fen(self):
+    output = ""
+    for rank in self.board:
+      empty = 0
+
+      for cell in rank:
+
+        if cell:
+          assert(isinstance(cell, Piece), "Cell is neither null nor a Piece")
+
+          if empty > 0:
+              output += str(empty)
+              empty = 0
+          output += cell.fen_notation()
+
+        else:
+            empty = empty + 1
+
+      if empty > 0:
+          output += str(empty)
+          
+      output += "/"
+    return output[:-1]
+    
+        
+
 # Draws board cells
 def draw_board(frame, cv2):
   for x in range(8):
