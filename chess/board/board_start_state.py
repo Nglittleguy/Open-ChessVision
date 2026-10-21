@@ -34,5 +34,5 @@ INIT_BOARD_STATE = [
   Piece(PieceColor.BLACK, PieceType.PAWN, notation2xy("e7")),
   Piece(PieceColor.BLACK, PieceType.PAWN, notation2xy("f7")),
   Piece(PieceColor.BLACK, PieceType.PAWN, notation2xy("g7")),
-  Piece(PieceColor.WHITE, PieceType.PAWN, notation2xy("h7")),
+  Piece(PieceColor.BLACK, PieceType.PAWN, notation2xy("h7")),
 ]

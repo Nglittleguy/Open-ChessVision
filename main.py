@@ -171,7 +171,6 @@ def step_3(vc):
 
     # # Wait to check required placement before beginning
     board_frame, valid_placement = m.wait_for_placement(board_frame) 
-    valid_placement = False
     if valid_placement:
       break;
 
