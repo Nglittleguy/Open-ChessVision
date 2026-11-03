@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Chess WebSocket Test</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            text-align: center; 
+            margin-top: 30px; 
+            background: #121212; 
+            color: #fff; 
+        }
+        input, button { 
+            padding: 8px 12px; 
+            margin: 5px; 
+            font-size: 16px; 
+        }
+        button { cursor: pointer; }
+        #status { font-weight: bold; margin: 10px; }
+        #video-container { margin-top: 20px; }
+        #video-frame { 
+            max-width: 460px; 
+            border: 2px solid #555; 
+            background: #000; 
+        }
+        #fen-box { 
+            font-family: monospace; 
+            font-size: 18px; 
+            background: #222; 
+            padding: 15px; 
+            display: inline-block; 
+            margin-top: 15px; 
+            border: 1px solid #444; 
+            letter-spacing: 1px;
+        }
+    </style>
+</head>
+<body>
+
+    <h2>Chess Board Stream Tester</h2>
+    
+    <div>
+        <input type="text" id="ws-url" value="ws://localhost:8000/ws" size="35">
+        <button onclick="connectWebSocket()">Connect</button>
+        <button onclick="disconnectWebSocket()">Disconnect</button>
+    </div>
+    
+    <div id="status">Status: Disconnected</div>
+
+    <div id="video-container">
+        <h3>Live Video Frame:</h3>
+        <img id="video-frame" alt="Waiting for video feed...">
+    </div>
+
+    <div>
+        <h3>Partial FEN:</h3>
+        <div id="fen-box">Waiting for FEN data...</div>
+    </div>
+
+    <script>
+        let ws = null;
+
+        function connectWebSocket() {
+            const urlInput = document.getElementById('ws-url').value;
+            const statusEl = document.getElementById('status');
+
+            if (ws) {
+                ws.close();
+            }
+
+            statusEl.innerText = "Status: Connecting...";
+            statusEl.style.color = "#FF9800";
+
+            ws = new WebSocket(urlInput);
+            // Ensure binary data is handled as Blob objects
+            ws.binaryType = 'blob';
+
+            ws.onopen = () => {
+                statusEl.innerText = "Status: Connected";
+                statusEl.style.color = "#4CAF50";
+                console.log("Connected to WebSocket server");
+            };
+
+            ws.onmessage = async (event) => {
+                // Check if the received message is a binary blob (video frame)
+                if (event.data instanceof Blob) {
+                    const img = document.getElementById('video-frame');
+                    
+                    // Clean up the previous object URL to prevent memory leaks
+                    if (img.src.startsWith('blob:')) {
+                        URL.revokeObjectURL(img.src);
+                    }
+                    
+                    img.src = URL.createObjectURL(event.data);
+                } 
+                else {
+                    // Handle JSON text data (FEN state)
+                    try {
+                        const message = JSON.parse(event.data);
+                        if (message.type === 'fen') {
+                            const fenBox = document.getElementById('fen-box');
+                            fenBox.innerText = message.data.partialFen;
+                        }
+                    } catch (err) {
+                        console.error("Failed to parse incoming JSON message:", err);
+                    }
+                }
+            };
+
+            ws.onerror = (error) => {
+                statusEl.innerText = "Status: Error (Check console)";
+                statusEl.style.color = "#F44336";
+                console.error("WebSocket Error:", error);
+            };
+
+            ws.onclose = () => {
+                statusEl.innerText = "Status: Disconnected";
+                statusEl.style.color = "#FFF";
+                console.log("WebSocket connection closed");
+            };
+        }
+
+        function disconnectWebSocket() {
+            if (ws) {
+                ws.close();
+            }
+        }
+    </script>
+</body>
+</html>

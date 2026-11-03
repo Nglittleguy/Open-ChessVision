@@ -3,6 +3,7 @@ import numpy as np
 import math
 from camera.color_mask import hue2brg
 import memory.selection as m
+from chess.board import board
 
 TRACKING_HUE_THRESHOLD = 15
 TRACKING_PIECE_FRAME = 15
@@ -147,8 +148,8 @@ def piece_exterior_is_black(hsv_frame, center, hue):
           
           break
 
-  # If all 4 directions reach a black border, then this is a black piece 
-  return dark_sides == len(dir)
+  # If all 3/4 directions reach a black border, then this is a black piece 
+  return dark_sides >= 3
 
 def split_threshold(val_list):
   if len(val_list) < 2:
