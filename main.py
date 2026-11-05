@@ -115,6 +115,13 @@ def step_2(vc):
     key = cv2.waitKey(100) & 0xFF
 
     if key == ord(' '): # next on spacebar
+
+      if m.selection_stage > 0 and m.selection_stage < len(m.selection):
+        s["range"] = cv2.getTrackbarPos('Range', "Adjustments")
+        s["offset"] = cv2.getTrackbarPos('Y-Offset', "Adjustments")
+        s["saturation"] = cv2.getTrackbarPos('Saturation', "Adjustments")
+        s["brightness"] = cv2.getTrackbarPos('Brightness', "Adjustments")
+
       m.selection_stage = m.selection_stage + 1
     if key == ord('b'): # b for back
       if m.selection_stage != 0:
@@ -152,6 +159,8 @@ def step_3(vc):
 
     sample_frame = m.draw_hue_picker(sample_frame)
 
+    mask_list = []
+
     # Clear board and start initalization each frame
     m.clear_board()
 
@@ -177,15 +186,21 @@ def step_3(vc):
         # Place pieces on the board
         board_frame = m.put_selection_on_board(board_frame, stage)
 
+        mask_resized = cv2.resize(mask_frame, (150, 150), interpolation=cv2.INTER_AREA)
+        mask_rgb = cv2.cvtColor(mask_resized, cv2.COLOR_GRAY2RGB)
+        mask_list.append(mask_rgb)
+
     # # Wait to check required placement before beginning
     board_frame, valid_placement = m.wait_for_placement(board_frame) 
     if valid_placement:
       break;
 
     board_frame = cv2.resize(board_frame, (460, 460), interpolation=cv2.INTER_AREA)
+    
 
     cv2.imshow("Samples", sample_frame)
     cv2.imshow("Board", board_frame)
+    cv2.imshow("Masks", np.concatenate(mask_list, axis=1))
     m.bw_threshold = cv2.getTrackbarPos('B/W Threshold', "Adjustments")
     m.distort_x = cv2.getTrackbarPos('Distort X', "Adjustments")
     m.distort_y = cv2.getTrackbarPos('Distort Y', "Adjustments")
@@ -253,11 +268,22 @@ def step_4(vc):
 
   # Run FastAPI / Uvicorn in a background thread so OpenCV can control the main loop
   server_thread = threading.Thread(
-      target=lambda: uvicorn.run(app, host="0.0.0.0", port=8000, log_level="warning"),
+      target=lambda: uvicorn.run(app, host="0.0.0.0", port=8000, log_level="warning", ssl_keyfile="key.pem", ssl_certfile="cert.pem"),
       daemon=True
   )
   server_thread.start()
 
+  cv2.namedWindow("Parameters", cv2.WINDOW_NORMAL)
+  # Initialize trackbars for every piece stage (from index 2 to end)
+  for stage in range(2, len(m.selection)):
+    s = m.selection[stage]
+    piece_name = s["name"]
+    cv2.createTrackbar(f"{piece_name} - Range", "Parameters", s["range"], 50, m.nothing)
+    cv2.createTrackbar(f"{piece_name} - Bright", "Parameters", s["brightness"], 255, m.nothing)
+    cv2.createTrackbar(f"{piece_name} - Sat", "Parameters", s["saturation"], 255, m.nothing)
+    cv2.createTrackbar(f"{piece_name} - Offset", "Parameters", s["offset"], 150, m.nothing)
+
+    
   # Create FastAPI with websocket
   # When connected, loop
   # Every 50ms, send a frame of board_frame to have message type 'video' and message.data.frame = <video frame>
@@ -280,6 +306,15 @@ def step_4(vc):
 
     for stage in range(1,PIECE_ARRAY_SIZE):
       s = m.selection[stage]
+
+      # Read live trackbar values for piece stages dynamically on every frame
+      if stage >= 2:
+        piece_name = s["name"]
+        s["range"] = cv2.getTrackbarPos(f"{piece_name} - Range", "Parameters")
+        s["brightness"] = cv2.getTrackbarPos(f"{piece_name} - Bright", "Parameters")
+        s["saturation"] = cv2.getTrackbarPos(f"{piece_name} - Sat", "Parameters")
+        s["offset"] = cv2.getTrackbarPos(f"{piece_name} - Offset", "Parameters")
+
       # Periodically update sample hue
       if update_sample:
         s["hue"] = calc_hue(sample_frame, s["x"], s["y"])
@@ -303,6 +338,10 @@ def step_4(vc):
     board_frame = cv2.resize(board_frame, (460, 460), interpolation=cv2.INTER_AREA)
 
     cv2.imshow("Board", board_frame)
+    m.bw_threshold = cv2.getTrackbarPos('B/W Threshold', "Adjustments")
+    m.distort_x = cv2.getTrackbarPos('Distort X', "Adjustments")
+    m.distort_y = cv2.getTrackbarPos('Distort Y', "Adjustments")
+    m.distort_amount = cv2.getTrackbarPos('Distort Amount', "Adjustments")
 
     board_matrix = m.board
     partial_fen = Board(board=board_matrix).to_fen()

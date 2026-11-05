@@ -92,7 +92,7 @@ def step_test(vc):
   # Run FastAPI / Uvicorn in a background thread so OpenCV can control the main loop
   logger.info("Starting Uvicorn server thread on port 8000...")
   server_thread = threading.Thread(
-      target=lambda: uvicorn.run(app, host="0.0.0.0", port=8000, log_level="warning"),
+      target=lambda: uvicorn.run(app, host="0.0.0.0", port=8000, log_level="warning", ssl_keyfile="key.pem", ssl_certfile="cert.pem"),
       daemon=True
   )
   server_thread.start()
