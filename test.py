@@ -1,3 +1,4 @@
+# 10.15.219.238 
 import cv2
 import numpy as np
 import memory.zones as z
@@ -92,7 +93,8 @@ def step_test(vc):
   # Run FastAPI / Uvicorn in a background thread so OpenCV can control the main loop
   logger.info("Starting Uvicorn server thread on port 8000...")
   server_thread = threading.Thread(
-      target=lambda: uvicorn.run(app, host="0.0.0.0", port=8000, log_level="warning", ssl_keyfile="key.pem", ssl_certfile="cert.pem"),
+      # target=lambda: uvicorn.run(app, host="0.0.0.0", port=8000, log_level="warning", ssl_keyfile="key.pem", ssl_certfile="cert.pem"),
+      target=lambda: uvicorn.run(app, host="0.0.0.0", port=8000, log_level="warning"),
       daemon=True
   )
   server_thread.start()

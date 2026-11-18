@@ -20,7 +20,7 @@ Choosing colours for pieces
 SELECTION_SIZE = 15
 SELECTION_THICKNESS = 2
 WB_CHECK_PERIOD = 5 #seconds
-SAMPLE_TEXT_OFFSET = 30
+SAMPLE_TEXT_OFFSET = 15
 ALPHA = 0.5
 PIECE_ARRAY_SIZE = 8
 
@@ -101,7 +101,7 @@ selection = [
     "color": (0, 150, 255),
     "x": 0,
     "y": 0,
-    "range": 1,
+    "range": 2,
     "brightness": 100,
     "saturation": 100,
     "hue": 0,
@@ -118,7 +118,7 @@ selection = [
     "x": 0,
     "y": 0,
     "range": 5, 
-    "brightness": 140  ,
+    "brightness": 165,
     "saturation": 75,
     "hue": 0,
     "centers": [],
@@ -226,7 +226,7 @@ def callibrate_frame(sample_frame, board_frame, step):
 def draw_hue_picker(frame):
   for s in range(min(selection_stage + 1, len(selection))):
     cv2.rectangle(frame, (selection[s]["x"]-SELECTION_SIZE, selection[s]["y"]-SELECTION_SIZE), (selection[s]["x"]+SELECTION_SIZE, selection[s]["y"]+SELECTION_SIZE), selection[s]["color"], SELECTION_THICKNESS) 
-    cv2.putText(frame, selection[s]["name"], (selection[s]["x"]-SAMPLE_TEXT_OFFSET, selection[s]["y"]-SAMPLE_TEXT_OFFSET), cv2.FONT_HERSHEY_SIMPLEX, 1, selection[s]["color"], 1)
+    cv2.putText(frame, selection[s]["name"], (selection[s]["x"]-SAMPLE_TEXT_OFFSET, selection[s]["y"]-SAMPLE_TEXT_OFFSET), cv2.FONT_HERSHEY_SIMPLEX, 0.5, selection[s]["color"], 1)
   return frame
 
 # Draw Selection on Board Frame

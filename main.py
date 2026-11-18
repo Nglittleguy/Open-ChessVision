@@ -1,3 +1,4 @@
+# 10.15.219.238
 import cv2
 import numpy as np
 import memory.zones as z
@@ -209,6 +210,7 @@ def step_3(vc):
     cv2.waitKey(100)
 
   print("Valid Now")
+  cv2.destroyWindow("Masks")
   return  
 
 # Step 4: Starting WebSocket
@@ -268,7 +270,8 @@ def step_4(vc):
 
   # Run FastAPI / Uvicorn in a background thread so OpenCV can control the main loop
   server_thread = threading.Thread(
-      target=lambda: uvicorn.run(app, host="0.0.0.0", port=8000, log_level="warning", ssl_keyfile="key.pem", ssl_certfile="cert.pem"),
+      # target=lambda: uvicorn.run(app, host="0.0.0.0", port=8000, log_level="warning", ssl_keyfile="key.pem", ssl_certfile="cert.pem"),
+      target=lambda: uvicorn.run(app, host="0.0.0.0", port=8000, log_level="warning"),
       daemon=True
   )
   server_thread.start()
@@ -342,6 +345,8 @@ def step_4(vc):
     m.distort_x = cv2.getTrackbarPos('Distort X', "Adjustments")
     m.distort_y = cv2.getTrackbarPos('Distort Y', "Adjustments")
     m.distort_amount = cv2.getTrackbarPos('Distort Amount', "Adjustments")
+
+    cv2.imshow("Samples", sample_frame)
 
     board_matrix = m.board
     partial_fen = Board(board=board_matrix).to_fen()

@@ -330,7 +330,7 @@ def run():
     # Keep Hue Picker on Callibration Window
     for stage in range(min(selection_stage + 1, PIECE_ARRAY_SIZE)):
       cv2.rectangle(sample_frame, (selection[stage]["x"]-SELECTION_SIZE, selection[stage]["y"]-SELECTION_SIZE), (selection[stage]["x"]+SELECTION_SIZE, selection[stage]["y"]+SELECTION_SIZE), selection[stage]["color"], SELECTION_THICKNESS) 
-      cv2.putText(sample_frame, selection[stage]["name"], (selection[stage]["x"]-30, selection[stage]["y"]-30), cv2.FONT_HERSHEY_SIMPLEX, 1, selection[stage]["color"], 1)
+      cv2.putText(sample_frame, selection[stage]["name"], (selection[stage]["x"]-30, selection[stage]["y"]-30), cv2.FONT_HERSHEY_SIMPLEX, 0.2, selection[stage]["color"], 1)
 
     # Pick the Hue
     if selection_stage > 0 and selection_stage < PIECE_ARRAY_SIZE:
